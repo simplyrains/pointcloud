@@ -262,6 +262,7 @@
 		81B4F76C1AA5E42000F906F1 /* pointcloud */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pointcloud; sourceTree = BUILT_PRODUCTS_DIR; };
 		81B4F76F1AA5E42000F906F1 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		81E8B0241AB988A90005F151 /* url_generator.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = url_generator.html; path = google_downloader/url_generator.html; sourceTree = "<group>"; };
+		81E8B0261AB989520005F151 /* bash.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = bash.sh; path = google_downloader/bash.sh; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -548,6 +549,7 @@
 			isa = PBXGroup;
 			children = (
 				81E8B0241AB988A90005F151 /* url_generator.html */,
+				81E8B0261AB989520005F151 /* bash.sh */,
 			);
 			name = Downloader;
 			sourceTree = "<group>";

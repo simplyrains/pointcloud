@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8156CB5F1AB99C2800EBDE34 /* image_holder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8156CB5D1AB99C2800EBDE34 /* image_holder.cpp */; };
 		815B9F7B1AA6F3C100C231A2 /* libboost_filesystem.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 815B9F7A1AA6F3C100C231A2 /* libboost_filesystem.a */; };
 		815B9FF11AA6F4FC00C231A2 /* libboost_atomic-mt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 815B9F7C1AA6F4FB00C231A2 /* libboost_atomic-mt.a */; };
 		815B9FF21AA6F4FC00C231A2 /* libboost_atomic-mt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 815B9F7D1AA6F4FB00C231A2 /* libboost_atomic-mt.dylib */; };
@@ -141,6 +142,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8156CB5D1AB99C2800EBDE34 /* image_holder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_holder.cpp; path = ../image_holder.cpp; sourceTree = "<group>"; };
+		8156CB5E1AB99C2800EBDE34 /* image_holder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = image_holder.h; path = ../image_holder.h; sourceTree = "<group>"; };
 		815B9F7A1AA6F3C100C231A2 /* libboost_filesystem.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_filesystem.a; path = /usr/local/Cellar/boost/1.57.0/lib/libboost_filesystem.a; sourceTree = "<absolute>"; };
 		815B9F7C1AA6F4FB00C231A2 /* libboost_atomic-mt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libboost_atomic-mt.a"; path = "/usr/local/Cellar/boost/1.57.0/lib/libboost_atomic-mt.a"; sourceTree = "<absolute>"; };
 		815B9F7D1AA6F4FB00C231A2 /* libboost_atomic-mt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libboost_atomic-mt.dylib"; path = "/usr/local/Cellar/boost/1.57.0/lib/libboost_atomic-mt.dylib"; sourceTree = "<absolute>"; };
@@ -540,6 +543,8 @@
 		81B4F76E1AA5E42000F906F1 /* pointcloud */ = {
 			isa = PBXGroup;
 			children = (
+				8156CB5D1AB99C2800EBDE34 /* image_holder.cpp */,
+				8156CB5E1AB99C2800EBDE34 /* image_holder.h */,
 				81B4F76F1AA5E42000F906F1 /* main.cpp */,
 			);
 			path = pointcloud;
@@ -611,6 +616,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				81B4F7701AA5E42000F906F1 /* main.cpp in Sources */,
+				8156CB5F1AB99C2800EBDE34 /* image_holder.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

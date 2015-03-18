@@ -13,210 +13,202 @@
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
     <script>
 
-var marker_holder;
-var panoramaset;
-var map;
-var start_pos;
-var berkeley = new google.maps.LatLng(37.869085, -122.254775);
-var sv = new google.maps.StreetViewService();
+      var marker_holder;
+      var panoramaset;
+      var map;
+      var start_pos;
+      var default_center = new google.maps.LatLng(35.67950938751248, 139.73594963550568);
+      var sv = new google.maps.StreetViewService();
 
-var panorama;
+      var panorama;
 
-function compare(a,b) {
-  if (a.heading < b.heading)
-     return -1;
-  if (a.heading > b.heading)
-    return 1;
-  return 0;
-}
+      ///// ORAGMA MARK: Utility function
 
-function initialize() {
-  
-  marker_holder = [];
-  panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'));
-  panorama.setZoom(3);
+        function compare(a,b) {
+          if (a.heading < b.heading)
+             return -1;
+          if (a.heading > b.heading)
+            return 1;
+          return 0;
+        }
 
-  // Set up the map
-  var mapOptions = {
-    center: berkeley,
-    zoom: 16,
-    streetViewControl: false
-  };
-  map = new google.maps.Map(document.getElementById('map-canvas'),
-      mapOptions);
+        function inRange(pos){
+          var dist = google.maps.geometry.spherical.computeDistanceBetween(pos, start_pos);
+          if(dist<50) return true;
+          return false;
+        }
 
-  // getPanoramaByLocation will return the nearest pano when the
-  // given radius is 50 meters or less.
-  google.maps.event.addListener(map, 'click', function(event) {
-    clickOn(event.latLng);
-  });
-  setCenter(35.67950938751248, 139.73594963550568);
-}
+        function setCenter(lat, lng){
+          map.setCenter(new google.maps.LatLng(lat, lng));
+          clickOn(new google.maps.LatLng(lat, lng));
+        }
 
-function generateLink(marker){
-  var pano = marker.title;
-  var heading = google.maps.geometry.spherical.computeHeading(marker.position, start_pos);
-  var link = "https://maps.googleapis.com/maps/api/streetview?size=640x640&pitch=10&fov=30&"+
-              "pano="+pano+
-              "&heading="+heading;
-  console.log(link);
-}
+        function displayIndividual(pano_name){
+          var output = "";
+          var fov = parseInt(document.getElementById('fov').value);
+          var apikey = document.getElementById('apikey').value;
+          for (heading = 0; heading < 360; heading+=fov/2) {
+            for (pitch = -90; pitch <= 90; pitch+=fov/2) {
 
-function sortAndDisplay(){
-  panoramaset.sort(compare);
-  var output = "";
-  var pitch = parseInt(document.getElementById('pitch').value);
-  var fov = parseInt(document.getElementById('fov').value);
-  for(i in panoramaset){
-    output = output+"https://maps.googleapis.com/maps/api/streetview?size=640x640&pitch="+pitch+"&fov="+fov+"&"+
-              "pano="+panoramaset[i].pano+
-              "&heading="+panoramaset[i].heading+"&id=."+i+" ";
-  }
+              output = output+"https://maps.googleapis.com/maps/api/streetview?size=640x640&pitch="+pitch+"&fov="+fov+"&"+
+                        "pano="+pano_name+
+                        "&heading="+heading+"&key="+apikey+"&id=."+pitch+","+heading+" ";
+            }
+          }
+          document.getElementById('output').value = output;
+        }
 
-  document.getElementById('output').value = output;
-}
+      ///// PRAGMA MARK: Googlemap Callback + Init ////////////////////////
 
-function displayIndividual(pano_name){
-  var output = "";
-  var fov = parseInt(document.getElementById('fov').value);
-  var apikey = document.getElementById('apikey').value;
-  for (heading = 0; heading < 360; heading+=15) {
-    for (pitch = -90; pitch <= 90; pitch+=15) {
+        function initialize() {
+          
+          marker_holder = [];
+          panorama = new google.maps.StreetViewPanorama(document.getElementById('pano'));
+          panorama.setZoom(3);
 
-      output = output+"https://maps.googleapis.com/maps/api/streetview?size=640x640&pitch="+pitch+"&fov="+fov+"&"+
-                "pano="+pano_name+
-                "&heading="+heading+"&key="+apikey+"&id=."+pitch+","+heading+" ";
-    }
-  }
-  document.getElementById('output').value = output;
-}
+          // Set up the map
+          var mapOptions = {
+            center: default_center,
+            zoom: 16,
+            streetViewControl: false
+          };
+          map = new google.maps.Map(document.getElementById('map-canvas'),
+              mapOptions);
 
-function clickOn(pos){
-  for(var index = 0; index<marker_holder.length; index++){
-    marker_holder[index].setMap(null);
-  }
-  marker_holder = [];
+          // getPanoramaByLocation will return the nearest pano when the
+          // given radius is 50 meters or less.
+          google.maps.event.addListener(map, 'click', function(event) {
+            clickOn(event.latLng);
+          });
+        }
 
-  panoramaset = [];
+        // Clicking on map will fetch a new set of panorama
+        function clickOn(pos){
+          for(var index = 0; index<marker_holder.length; index++){
+            marker_holder[index].setMap(null);
+          }
+          marker_holder = [];
 
-  var marker = new google.maps.Marker({
-    position: pos,
-    map: map,
-    title: "SOURCE",
-    zIndex:99999999
+          panoramaset = [];
 
-  });
-  marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
-  marker_holder.push(marker);
+          var marker = new google.maps.Marker({
+            position: pos,
+            map: map,
+            title: "SOURCE",
+            zIndex:99999999
 
-  start_pos = pos;
-  console.log(start_pos);
+          });
+          marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+          marker_holder.push(marker);
 
-  sv.getPanoramaByLocation(pos, 50, processSVData);
-  document.getElementById('location').value=start_pos.lat()+","+start_pos.lng();
-}
+          start_pos = pos;
+          console.log(start_pos);
 
-function processSVData(data, status) {
-  if (status == google.maps.StreetViewStatus.OK) {
-    var marker = new google.maps.Marker({
-      position: data.location.latLng,
-      map: map,
-      title: data.location.pano,
-      zIndex:99999998
+          sv.getPanoramaByLocation(pos, 50, processSVData);
+          document.getElementById('location').value=start_pos.lat()+","+start_pos.lng();
+        }
 
-    });
-    marker.setIcon('http://maps.google.com/mapfiles/ms/icons/yellow-dot.png');
-    google.maps.event.addListener(marker, 'click', function() {
-      var x_sv = new google.maps.StreetViewService();
-      x_sv.getPanoramaById(this.title, processSVDataShowPano);
-      displayIndividual(this.title)
-    });
-    marker_holder.push(marker);
-    
-    //generateLink(marker);
+        // Nearest panorama, Yellow Marker. Called when clicking on any pos on gmap
+        // Add handler for yellow marker and do the BFS
+        function processSVData(data, status) {
+          if (status == google.maps.StreetViewStatus.OK) {
+            var marker = new google.maps.Marker({
+              position: data.location.latLng,
+              map: map,
+              title: data.location.pano,
+              zIndex:99999998
 
-    panorama.setPano(data.location.pano);
-    panorama.setPov({
-      heading: 270,
-      pitch: parseInt(document.getElementById('pitch').value)
-    });
-    panorama.setVisible(true);
+            });
+            marker.setIcon('http://maps.google.com/mapfiles/ms/icons/yellow-dot.png');
+            google.maps.event.addListener(marker, 'click', function() {
+              var x_sv = new google.maps.StreetViewService();
+              x_sv.getPanoramaById(this.title, processSVDataShowPano);
+              displayIndividual(this.title)
+            });
+            marker_holder.push(marker);
 
-    bfs(data.location.pano);
-  } else {
-    alert('Street View data not found for this location.');
-  }
-}
+            panorama.setPano(data.location.pano);
 
-function processSVDataShowPano(data, status) {
-  if (status == google.maps.StreetViewStatus.OK) {
-    panorama.setPano(data.location.pano);
-    var heading = google.maps.geometry.spherical.computeHeading(data.location.latLng, start_pos);
-    panorama.setPov({
-      heading: heading,
-      pitch: parseInt(document.getElementById('pitch').value)
-    });
-    panorama.setVisible(true);
-  } 
-}
+            // Preview result
+            panorama.setPov({
+              heading: 0,
+              pitch: 0
+            });
+            panorama.setVisible(true);
 
-function inRange(pos){
-  var dist = google.maps.geometry.spherical.computeDistanceBetween(pos, start_pos);
-  if(dist<50) return true;
-  return false;
-}
+            bfs(data.location.pano);
+          } else {
+            alert('Street View data not found for this location.');
+          }
+        }
 
-function bfs(pano_id){
-  panoramaset = [];
-  var x_sv = new google.maps.StreetViewService();
-  x_sv.getPanoramaById(pano_id, processSVDataBFS);
-}
+        // Another Panorama, Red marker. Called when clicking on red/yellow marker
+        function processSVDataShowPano(data, status) {
+          if (status == google.maps.StreetViewStatus.OK) {
+            panorama.setPano(data.location.pano);
+            var heading = google.maps.geometry.spherical.computeHeading(data.location.latLng, start_pos);
+            // Preview result
+            panorama.setPov({
+              heading: heading,
+              pitch: 0
+            });
+            panorama.setVisible(true);
+          } 
+        }
 
-function setCenter(lat, lng){
-  map.setCenter(new google.maps.LatLng(lat, lng));
-  clickOn(new google.maps.LatLng(lat, lng));
-}
+        function bfs(pano_id){
+          panoramaset = [];
+          var x_sv = new google.maps.StreetViewService();
+          x_sv.getPanoramaById(pano_id, processSVDataBFS);
+        }
 
-function processSVDataBFS(data, status) {
-  if (status == google.maps.StreetViewStatus.OK) {
-    if(!inRange(data.location.latLng)) return;
-    for (i in panoramaset) {
-      if (panoramaset[i].pano == data.location.pano) return;
-    }
+        function processSVDataBFS(data, status) {
+          if (status == google.maps.StreetViewStatus.OK) {
+            if(!inRange(data.location.latLng)) return;
+            for (i in panoramaset) {
+              if (panoramaset[i].pano == data.location.pano) return;
+            }
 
-    panoramaset.push({
-      pano: data.location.pano,
-      latLng: data.location.latLng,
-      heading: google.maps.geometry.spherical.computeHeading(data.location.latLng, start_pos)
-    });
-    //TODO: Marker
-    //if(marker) marker.setMap(null);
-    sub_marker = new google.maps.Marker({
-      position: data.location.latLng,
-      map: map,
-      title: data.location.pano
-    });
-    sub_marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
-    google.maps.event.addListener(sub_marker, 'click', function() {
-      var x_sv = new google.maps.StreetViewService();
-      x_sv.getPanoramaById(this.title, processSVDataShowPano);
-      displayIndividual(this.title)
-    });
-    //generateLink(sub_marker);
+            panoramaset.push({
+              pano: data.location.pano,
+              latLng: data.location.latLng,
+              heading: google.maps.geometry.spherical.computeHeading(data.location.latLng, start_pos)
+            });
+            //TODO: Marker
+            //if(marker) marker.setMap(null);
+            sub_marker = new google.maps.Marker({
+              position: data.location.latLng,
+              map: map,
+              title: data.location.pano
+            });
+            sub_marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
+            google.maps.event.addListener(sub_marker, 'click', function() {
+              var x_sv = new google.maps.StreetViewService();
+              x_sv.getPanoramaById(this.title, processSVDataShowPano);
+              displayIndividual(this.title)
+            });
 
+            marker_holder.push(sub_marker);
 
-    marker_holder.push(sub_marker);
+            for(var index = 0; index<data.links.length; index++){
+              var pano_id = data.links[index].pano;
+              if(panoramaset.indexOf(pano_id)>0) continue;
+              var x_sv = new google.maps.StreetViewService();
+              x_sv.getPanoramaById(pano_id, processSVDataBFS);
+            }
+          }
+        }
 
-    for(var index = 0; index<data.links.length; index++){
-      var pano_id = data.links[index].pano;
-      if(panoramaset.indexOf(pano_id)>0) continue;
-      var x_sv = new google.maps.StreetViewService();
-      x_sv.getPanoramaById(pano_id, processSVDataBFS);
-    }
-  }
-}
-google.maps.event.addDomListener(window, 'load', initialize);
+      ///// PRAGMA MARK: Other Code
 
+      function download(filename, text) {
+        var pom = document.createElement('a');
+        pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        pom.setAttribute('download', filename);
+        pom.click();
+      }
+
+      google.maps.event.addDomListener(window, 'load', initialize);
 
     </script>
   </head>
@@ -224,13 +216,11 @@ google.maps.event.addDomListener(window, 'load', initialize);
     <div id="map-canvas" style="width: 50%; height: 70%;float:left"></div>
     <div id="pano" style="width: 50%; height: 70%;float:left"></div>    
     <textarea id="output" style="width: 50%; height: 25%;float:left"></textarea>
-        Pitch: <input type="text" id="pitch" value="10" /><br>
         FOV: <input type="text" id="fov" value="30" /><br>
         Location: <input type="text" id="location" value="-" /><br>
         API Key: <input type="text" id="apikey" value="AIzaSyCtsc1qMaipSMYWupcFddGzIku1ipcFgnA" />
-
-
-    <button type="button" onclick="sortAndDisplay();">Click Me!</button>
+        <button type="button" onClick="download('text.txt', document.getElementById('output').value);">Download as text.txt</button>
+        <button type="button" onClick="download(document.getElementById('location').value+'.txt', document.getElementById('output').value);">Download as "location".txt</button>
 
   </body>
 </html>

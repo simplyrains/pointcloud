@@ -105,7 +105,7 @@
           console.log(start_pos);
 
           sv.getPanoramaByLocation(pos, 50, processSVData);
-          document.getElementById('location').value=start_pos.lat()+","+start_pos.lng();
+          update_position_text(start_pos);
         }
 
         // Nearest panorama, Yellow Marker. Called when clicking on any pos on gmap
@@ -121,6 +121,7 @@
             });
             marker.setIcon('http://maps.google.com/mapfiles/ms/icons/yellow-dot.png');
             google.maps.event.addListener(marker, 'click', function() {
+              this.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
               var x_sv = new google.maps.StreetViewService();
               x_sv.getPanoramaById(this.title, processSVDataShowPano);
               displayIndividual(this.title)
@@ -128,6 +129,7 @@
             marker_holder.push(marker);
 
             panorama.setPano(data.location.pano);
+            update_position_text(data.location.latLng);
 
             // Preview result
             panorama.setPov({
@@ -146,6 +148,8 @@
         function processSVDataShowPano(data, status) {
           if (status == google.maps.StreetViewStatus.OK) {
             panorama.setPano(data.location.pano);
+
+            update_position_text(data.location.latLng);
             var heading = google.maps.geometry.spherical.computeHeading(data.location.latLng, start_pos);
             // Preview result
             panorama.setPov({
@@ -160,6 +164,10 @@
           panoramaset = [];
           var x_sv = new google.maps.StreetViewService();
           x_sv.getPanoramaById(pano_id, processSVDataBFS);
+        }
+
+        function update_position_text(latLng){
+          document.getElementById('location').value=latLng.lat()+","+latLng.lng();
         }
 
         function processSVDataBFS(data, status) {
@@ -183,6 +191,8 @@
             });
             sub_marker.setIcon('http://maps.google.com/mapfiles/ms/icons/red-dot.png');
             google.maps.event.addListener(sub_marker, 'click', function() {
+              
+              this.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
               var x_sv = new google.maps.StreetViewService();
               x_sv.getPanoramaById(this.title, processSVDataShowPano);
               displayIndividual(this.title)

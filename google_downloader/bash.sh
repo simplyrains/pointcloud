@@ -1,6 +1,19 @@
-for i in `cat text.txt` ; do curl -O $i ; done
-let "a = 0"
-for old in *.*; do
-	mv $old ${old##*.}.jpg
+FILES=*.txt
+for f in $FILES
+do
+  	echo "Processing $f file..."
+	split(){ arr=($f); }
+	IFS=','$'.' split
+	LAT=${arr[0]}.${arr[1]}
+	LNG=${arr[2]}.${arr[3]}
+	echo '   - 'LAT = $LAT
+	echo '   - 'LNG = $LNG
+	DIR_NAME=$LAT','$LNG
+	mkdir $DIR_NAME
+	cd $DIR_NAME
+	for i in `cat ../$f` ; do curl -O $i ; done
+	for old in *.*; do
+		mv $old ${old##*.}.jpg
+	done
+	cd ..
 done
-mv txt.jpg text.txt

@@ -7,16 +7,6 @@
 //
 
 #include "imageholder.h"
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <vector>
-#include <string>
-#include <iostream>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <iostream>
-#include <vector>
-#include <cmath>
 using namespace std;
 
 
@@ -63,25 +53,25 @@ using namespace std;
 
     // Use to get index for the image with closest heading/pitch
     int pitchToClosestIndex(double angle, double fov){
-        angle = -angle+fov/2;
+        angle = -angle+fov/4;
         angle = angle+90; // -90~90 -> 0~180
-        return (int)floor(angle/fov);
+        return (int)floor(angle*2.0/fov);
     }
     double indexToPitch(int index, double fov){
-        double angle = index*fov;
+        double angle = index*fov/2;
         angle -=90;
         return -angle;
     }
     int headingToClosestIndex(double angle, double fov){
-        angle = angle+fov/2+360;
+        angle = angle+fov/4+360;
         if(angle<0) angle+=360;
-        int result = (int)floor(angle/fov);
-        int numberOfIndex = (int)ceil(360/fov);
+        int result = (int)floor(angle*2/fov);
+        int numberOfIndex = (int)ceil(360*2/fov);
         // There's no 360, we need to change that to 0 instead
         return (result+numberOfIndex)%numberOfIndex;
     }
     double indexToHeading(int index, double fov){
-        double angle = index*fov;
+        double angle = index*fov/2;
         if(angle>360) angle-=360;
         return angle;
     }
@@ -123,8 +113,8 @@ using namespace std;
     imageholder::imageholder(double fov_in, string path){
         fraction = 1;
         fov = fov_in;
-        int size = (int)ceil(360/fov);
-        int size2 = (int)ceil(180/fov) + 1;
+        int size = (int)ceil(360*2/fov);
+        int size2 = (int)ceil(180*2/fov) + 1;
         holder = new cv::Mat*[size];
         for(int i=0;i<size;i++){
             holder[i] = new cv::Mat[size2];

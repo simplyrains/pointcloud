@@ -127,6 +127,7 @@
 		815BA0641AA6F4FC00C231A2 /* libboost_wserialization.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 815B9FEF1AA6F4FC00C231A2 /* libboost_wserialization.a */; };
 		815BA0651AA6F4FC00C231A2 /* libboost_wserialization.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 815B9FF01AA6F4FC00C231A2 /* libboost_wserialization.dylib */; };
 		81B4F7701AA5E42000F906F1 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81B4F76F1AA5E42000F906F1 /* main.cpp */; };
+		81E57E211ABBEBAF00F6EAB7 /* fpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81E57E1F1ABBEBAF00F6EAB7 /* fpoint.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -264,6 +265,8 @@
 		815B9FF01AA6F4FC00C231A2 /* libboost_wserialization.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libboost_wserialization.dylib; path = /usr/local/Cellar/boost/1.57.0/lib/libboost_wserialization.dylib; sourceTree = "<absolute>"; };
 		81B4F76C1AA5E42000F906F1 /* pointcloud */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pointcloud; sourceTree = BUILT_PRODUCTS_DIR; };
 		81B4F76F1AA5E42000F906F1 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		81E57E1F1ABBEBAF00F6EAB7 /* fpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fpoint.cpp; path = ../fpoint.cpp; sourceTree = "<group>"; };
+		81E57E201ABBEBAF00F6EAB7 /* fpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fpoint.h; path = ../fpoint.h; sourceTree = "<group>"; };
 		81E8B0241AB988A90005F151 /* url_generator.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = url_generator.html; path = google_downloader/url_generator.html; sourceTree = "<group>"; };
 		81E8B0261AB989520005F151 /* bash.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = bash.sh; path = google_downloader/bash.sh; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -543,6 +546,8 @@
 		81B4F76E1AA5E42000F906F1 /* pointcloud */ = {
 			isa = PBXGroup;
 			children = (
+				81E57E1F1ABBEBAF00F6EAB7 /* fpoint.cpp */,
+				81E57E201ABBEBAF00F6EAB7 /* fpoint.h */,
 				8156CB5D1AB99C2800EBDE34 /* imageholder.cpp */,
 				8156CB5E1AB99C2800EBDE34 /* imageholder.h */,
 				81B4F76F1AA5E42000F906F1 /* main.cpp */,
@@ -616,6 +621,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				81B4F7701AA5E42000F906F1 /* main.cpp in Sources */,
+				81E57E211ABBEBAF00F6EAB7 /* fpoint.cpp in Sources */,
 				8156CB5F1AB99C2800EBDE34 /* imageholder.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -6,8 +6,8 @@
 //  Copyright (c) 2558 Sarin Achawaranont. All rights reserved.
 //
 
-#ifndef __pointcloud__image_holder__
-#define __pointcloud__image_holder__
+#ifndef __pointcloud__imageholder__
+#define __pointcloud__imageholder__
 
 #include <stdio.h>
 #include <opencv2/core/core.hpp>
@@ -16,9 +16,6 @@
 #include <string>
 #include <iostream>
 #include <cmath>
-
-#endif /* defined(__pointcloud__image_holder__) */
-
 
 using namespace std;
 
@@ -45,3 +42,6 @@ private:
     double fraction;
     //static const int SIZE = 10;      // initial size of the array
 };
+
+
+#endif /* defined(__pointcloud__imageholder__) */

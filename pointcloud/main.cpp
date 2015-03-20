@@ -1,7 +1,7 @@
 #include <string>
 #include <iostream>
-#include "imageholder.h"
 #include "fpoint.h"
+#include "imageholder.h"
 #include "boost/filesystem.hpp"
 #include "boost/algorithm/string.hpp"
 #include <opencv2/core/core.hpp>
@@ -10,10 +10,28 @@
 namespace fs = boost::filesystem;
 using namespace std;
 
+// GLABAL VARIABLE
+// TODO:: Change to singleton
+vector<imageholder> all_pano;
+vector<fpoint> all_fpoint;
 
-static void onMouseMiniWindow( int event, int x, int y, int f, void* image){
-    cv::Mat* smallpic = (cv::Mat*) smallpic;
+#pragma mark imshow callback
+
+typedef struct MP
+{
+    imageholder* holder;
+    cv::Mat* smallpic;
+    double base_heading;
+    double base_pitch;
+} MouseParams;
+
+static void onMouseMiniWindow( int event, int x, int y, int f, void* param){
+    MouseParams* mp = (MouseParams*)param;
     cout << x << " " << y << endl;
+    if (event == cv::EVENT_LBUTTONDOWN) {
+        cout<<"\t- Base Heading: "<<mp->base_heading<<endl<<"\t- Base Pitch: "<<mp->base_pitch<<endl;
+        
+    }
     //cv::circle( *smallpic, cv::Point( x, y ), 32.0, cv::Scalar( 0, 0, 255 ), 1, 8 );
     //cv::imshow("Holder", *smallpic);
 }
@@ -22,6 +40,7 @@ static void onMouseMiniWindow( int event, int x, int y, int f, void* image){
 static void onMouse( int event, int x, int y, int f, void* imh){
     imageholder* pic = (imageholder*) imh;
     
+    //TODO: Refractor 360, 180
     int hf, pf, hfov, pfov;
     hfov = 360;
     pfov = 180;
@@ -31,18 +50,24 @@ static void onMouse( int event, int x, int y, int f, void* imh){
     cv::Mat plane(pf+1,hf+1,CV_8UC3);
     double heading = (1.0/multiplication)*(x-hf/2);
     double pitch = (1.0/multiplication)*(y-pf/2);
+    //
     cout << x << " " << y << "\t Heading: "<< heading << "\tPitch: "<< pitch << endl;
     if (event == cv::EVENT_LBUTTONDOWN) {
         cv::Mat image= pic->getImage(heading, pitch);
         imshow("Holder", image);
-        cv::setMouseCallback( "Holder", onMouseMiniWindow, &image );
+        
+        MouseParams mp;
+        mp.smallpic = &image;
+        mp.holder = pic;
+        mp.base_heading = heading;
+        mp.base_pitch = pitch;
+        cv::setMouseCallback( "Holder", onMouseMiniWindow, (void*)&mp );
         //putText(image, "point", Point(x,y), CV_FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,0));
     }
 }
 
 void render(imageholder imh){
-    
-    
+    //TODO: Refractor 360, 180
     int hf, pf, hfov, pfov;
     hfov = 360;
     pfov = 180;
@@ -64,14 +89,9 @@ void render(imageholder imh){
 
 }
 
-int main()
-{
-    
-
+void normalrun(){
     fs::path p{"./google_output"};
     fs::directory_iterator it{p};
-    vector<imageholder> all_pano;
-    vector<fpoint> all_fpoint;
     
     //Init all pano
     while (it != fs::directory_iterator{}){
@@ -108,43 +128,48 @@ int main()
         cv::destroyAllWindows();
         panoindex=(panoindex+1)%all_pano.size();
     }
-    
-    /*
-    imageholder imh = *new imageholder(30, string("google_output/"));
-    
-    //TODO: Add error handle in case imageholder can't load image
+}
 
-    int hf, pf, hfov, pfov;
-    hfov = 360;
-    pfov = 180;
-    double multiplication = 4;
-    hf = multiplication*hfov;
-    pf = multiplication*pfov;
-    
-    int o=0;
-    while (true) {
-        o+=10;
-        cv::Mat plane(pf+1,hf+1,CV_8UC3);
-        for(double row = 0; row <= pf; ++row) {
-            for(double col = 0; col <= hf; ++col) {
-                double heading = (1.0/multiplication)*(col-hf/2);
-                double pitch = (1.0/multiplication)*(row-pf/2);
-                //cout<<row-90<<" "<<col<<endl;
-                plane.at<cv::Vec3b>(row,col) = imh.getImageColorHP(heading+o,pitch);
-            }
-            
-        }
-        cv::imshow("x",plane);
-        // Wait until user press some key
-        cv::waitKey(0);
-    }
-     */
-     
-     
-    //}
+int main(){
+    normalrun();
+    return 0;
+}
+/*
+ imageholder imh = *new imageholder(30, string("google_output/"));
+ 
+ //TODO: Add error handle in case imageholder can't load image
+ 
+ int hf, pf, hfov, pfov;
+ hfov = 360;
+ pfov = 180;
+ double multiplication = 4;
+ hf = multiplication*hfov;
+ pf = multiplication*pfov;
+ 
+ int o=0;
+ while (true) {
+ o+=10;
+ cv::Mat plane(pf+1,hf+1,CV_8UC3);
+ for(double row = 0; row <= pf; ++row) {
+ for(double col = 0; col <= hf; ++col) {
+ double heading = (1.0/multiplication)*(col-hf/2);
+ double pitch = (1.0/multiplication)*(row-pf/2);
+ //cout<<row-90<<" "<<col<<endl;
+ plane.at<cv::Vec3b>(row,col) = imh.getImageColorHP(heading+o,pitch);
+ }
+ 
+ }
+ cv::imshow("x",plane);
+ // Wait until user press some key
+ cv::waitKey(0);
+ }
+ */
+
+
+//}
 //    fs::path directory("./google_output");
 //    fs::directory_iterator iter(directory), end;
-//    
+//
 //    fs::path x;
 //    for(;iter != end; ++iter)
 //    {
@@ -162,14 +187,14 @@ int main()
 //        return -1;
 //    }
 //    cv::imshow("My Window", img);
-//    
+//
 //    // Wait until user press some key
 //    cv::waitKey(0);
 //
-    //testColor(0, 90);
-    //return 0;
+//testColor(0, 90);
+//return 0;
 
-    
+
 //    double x = 10;
 //    double y = 100;
 //    double z = 0;
@@ -182,8 +207,5 @@ int main()
 //    rotateZ(&x,&y,&z, ay);
 //    cout << "(" << x << "," << y << "," << z << ") \n" << getHeading(x,y,z) << "," << getPitch(x,y,z) << "\t" << sqrt(x*x+y*y+z*z) << endl;
 
-    //for(double i=-30;i<30;i+=1.5)
-    //cout << i <<"\t"<<angleToPx(i,30,640)<<endl;
-    return 0;
-    
-}
+//for(double i=-30;i<30;i+=1.5)
+//cout << i <<"\t"<<angleToPx(i,30,640)<<endl;

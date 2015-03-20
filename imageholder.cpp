@@ -96,7 +96,15 @@ using namespace std;
         double k = imagewh/2/tan(f_median/2);
         return imagewh/2 + k*tan(a_median);
         //return imagewh/2 + k*tan(a_median*fraction);
-
+    }
+    double pxToAngle(double px, double fov, int imagewh){
+        double f_median = fov*M_PI/180;
+        double k = imagewh/2/tan(f_median/2);
+        
+        double angle = atan((px-imagewh/2)/k);
+        
+        double a_median = angle*180/M_PI;
+        return a_median;
     }
 
     // Get color from the position in image. Right now I floor the value down. May change method later

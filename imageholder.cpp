@@ -12,14 +12,12 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include "boost/filesystem.hpp"
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 #include <vector>
 #include <cmath>
 using namespace std;
-namespace fs = boost::filesystem;
 
 
 // Will create class ImageHolder {
@@ -170,6 +168,7 @@ namespace fs = boost::filesystem;
         
         cv::Mat img = holder[i_h][i_p];
         cv::Vec3b color = getColorHP(img, heading, pitch, fov, WIDTH, HEIGHT);
+        
         return color;
     }
 
@@ -190,4 +189,8 @@ namespace fs = boost::filesystem;
 
     double imageholder::getLng(){
         return lng;
+    }
+
+    string imageholder::getName(){
+        return name;
     }

@@ -8,21 +8,36 @@
 
 #include "fpoint.h"
 
-fpoint::fpoint(string name){
-    this->name = name;
+fpoint::fpoint(int id){
+    this->id = id;
 }
 
-//void fpoint::addHP(imageholder pano, double heading, double pitch){
-//    cv::Point2d hp(heading, pitch);
-//    addHP(pano, hp);
-//}
-//
-//void fpoint::addHP(imageholder pano, cv::Point2d hp){
-//    match.insert(make_pair(pano,hp));
-//}
-//
-//void fpoint::listMatch(){
-//    for(auto iter=match.begin(); iter!=match.end(); ++iter) {
-//        cout << iter->first << "/" <<iter->second << std::endl;
-//    }
-//}
+void fpoint::addHP(imageholder* pano, double heading, double pitch){
+    cv::Point2d hp(heading, pitch);
+    addHP(pano, hp);
+}
+
+void fpoint::addHP(imageholder* pano, cv::Point2d hp){
+    if(!(match.insert(make_pair(pano,hp))).second){
+        match[pano] = hp;
+    }
+}
+
+bool fpoint::remove(imageholder* pano){
+    auto result = match.find(pano);
+    if (result != match.end()) {
+        match.erase(result);
+        return true;
+    }
+    return false;
+}
+
+void fpoint::listMatch(){
+    cout<<"Listing match for P"<<id<<":"<<endl;
+    if(!match.empty())
+    for(auto iter=match.begin(); iter!=match.end(); ++iter) {
+        cout << iter->first->getName() << "/" <<iter->second << std::endl;
+    }
+    else cout<<"<EMPTY>"<<endl;
+    cout<<endl;
+}

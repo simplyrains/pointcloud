@@ -13,25 +13,26 @@
 #include <string>
 #include <opencv2/core/core.hpp>
 #include <unordered_map>
-//#include "imageholder.h"
-#include <unordered_map>
+#include "imageholder.h"
+#include <map>
 
 using namespace std;
 
 class fpoint{
 public:
-    fpoint(string name);
+    fpoint(int id);
     //map: imageholder + heading,pitch from that imageholder
-    //unordered_map<imageholder, cv::Point2d> match;
+    map<imageholder*, cv::Point2d> match;
     cv::Point3d position;
     string name;
     int id;
     int status; // solved or unsolved (triangulation)
     // method: add new match (imageholder, heading, pitch); << check with the exising map
     
-//    void listMatch();
-//    void addHP(imageholder pano, double heading, double pitch);
-//    void addHP(imageholder pano, cv::Point2d hp);
+    void listMatch();
+    void addHP(imageholder* pano, double heading, double pitch);
+    void addHP(imageholder* pano, cv::Point2d hp);
+    bool remove(imageholder* pano);
     // method: solve triangulation: find position
     // method: getheading (imageholder x) [if triangulated] calculate heading of this point if it were to show up on imageholder x
     // method: getpitch (imageholder x) [if triangulated] calculate pitch of this point if it were to show up on imageholder x

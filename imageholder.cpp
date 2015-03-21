@@ -97,6 +97,8 @@ using namespace std;
         return imagewh/2 + k*tan(a_median);
         //return imagewh/2 + k*tan(a_median*fraction);
     }
+
+    //is working, but nobody use this. keep it just in case ;P
     double pxToAngle(double px, double fov, int imagewh){
         double f_median = fov*M_PI/180;
         double k = imagewh/2/tan(f_median/2);
@@ -130,17 +132,17 @@ using namespace std;
                 int heading = (int)indexToHeading(i,fov);
                 int pitch = (int)indexToPitch(j,fov);
                 string name = path+to_string(pitch)+string(",")+to_string(heading)+string(".jpg");
-                cout<<"Reading: "<<name<<endl;
+                //cout<<"Reading: "<<name<<endl;
                 holder[i][size2-j-1] = cv::imread(name);
                 //if fail to read the image
                 if ( holder[i][size2-j-1].empty() ){
-                    cout << "Error loading the image: " << name << endl;
+                    cout << "Error loading the image: " << name;
                 }
                 
             }
         }
         
-        cout << "\nReading Complete!"<<endl;
+        cout << " : Reading Complete!"<<endl;
     }
 
     cv::Mat imageholder::getImage(double heading, double pitch){

@@ -32,10 +32,17 @@ public:
     double getLat();
     double getLng();
     string getName();
+    void setRelativePos(imageholder* base_img);
     cv::Mat getImage(double heading, double pitch);
+    double getRelativeX();
+    double getRelativeY();
+    double computeHeading(double x, double y, double z);
+    double computePitch(double x, double y, double z);
 private:
     double lat;
+    double relative_x;
     double lng;
+    double relative_y;
     double fov;
     string name;
     cv::Mat **holder;

@@ -7,6 +7,7 @@
 //
 
 #include "imageholder.h"
+#include "utility.h"
 using namespace std;
 
 
@@ -142,6 +143,8 @@ using namespace std;
             }
         }
         
+        relative_x = 0;
+        relative_y = 0;
         cout << " : Reading Complete!"<<endl;
     }
 
@@ -172,6 +175,30 @@ using namespace std;
         return color;
     }
 
+    void imageholder::setRelativePos(imageholder *base_img){
+        double b_lat = base_img->getLat();
+        double b_lng = base_img->getLng();
+        relative_x = utility::distance(b_lat, b_lng, lat, b_lng);
+        relative_y = utility::distance(b_lat, b_lng, b_lat, lng);
+    }
+
+
+    // Calculate a heading/pitch of the following LCS coordinate based on the position of this pano
+    double imageholder::computeHeading(double x, double y, double z){
+        double rx = x - relative_x;
+        double ry = y - relative_y;
+        double rz = z;
+        double heading = getHeading(rx, ry, rz);
+        return heading;
+    }
+    double imageholder::computePitch(double x, double y, double z){
+        double rx = x - relative_x;
+        double ry = y - relative_y;
+        double rz = z;
+        double pitch = getPitch(rx, ry, rz);
+        return pitch;
+    }
+
 #pragma mark getter/setter
 
     void imageholder::setName(string name_){
@@ -189,6 +216,14 @@ using namespace std;
 
     double imageholder::getLng(){
         return lng;
+    }
+
+    double imageholder::getRelativeX(){
+        return relative_x;
+    }
+
+    double imageholder::getRelativeY(){
+        return relative_y;
     }
 
     string imageholder::getName(){

@@ -130,7 +130,7 @@ void normalrun(){
     fs::path p{"./google_output"};
     fs::directory_iterator it{p};
     
-    
+    int count = 0;
     //Init all pano
     while (it != fs::directory_iterator{}){
         if(fs::is_directory(it->path())){
@@ -144,13 +144,20 @@ void normalrun(){
             
             string name = it->path().filename().string();
             imh->setName(name);
+            cout << "Name = " << imh->getName() << endl;
             
             std::vector<std::string> x;
             boost::split(x, name, boost::is_any_of("\t "));
             imh->setPos(atof(x.at(0).c_str()), atof(x.at(x.size()-1).c_str()));
             
-            cout << "Name = " << imh->getName() << endl << endl;
+            if(count!=0) {
+                imh->setRelativePos(all_pano[0]);
+                
+                cout<<"Relative pos: ("<<imh->getRelativeX()<<","<<imh->getRelativeY()<<")"<<endl;
+            }
+            
             all_pano.push_back(imh);
+            count++;
         }
         it++;
     }
@@ -174,7 +181,6 @@ void normalrun(){
         cv::setMouseCallback(imh->getName(),onMouse, (void*)&mp );
         // Wait until user press some key
         int key = cv::waitKey(0);
-        cv::destroyAllWindows();
         
         switch (key) {
             case KEY_L:{
@@ -215,6 +221,8 @@ void normalrun(){
                 break;
             }
         }
+        
+        cv::destroyAllWindows();
         cout<<"At point: "<<(*f_iter)->id<<", "<<(*f_iter)->match.size()<<" matche(s)."<<endl;
     }
 }

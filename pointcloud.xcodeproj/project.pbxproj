@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8113FF0B1AC028020068B1D8 /* utility.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8113FF091AC028020068B1D8 /* utility.cpp */; };
 		8156CB5F1AB99C2800EBDE34 /* imageholder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8156CB5D1AB99C2800EBDE34 /* imageholder.cpp */; };
 		815B9F7B1AA6F3C100C231A2 /* libboost_filesystem.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 815B9F7A1AA6F3C100C231A2 /* libboost_filesystem.a */; };
 		815B9FF11AA6F4FC00C231A2 /* libboost_atomic-mt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 815B9F7C1AA6F4FB00C231A2 /* libboost_atomic-mt.a */; };
@@ -143,6 +144,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8113FF091AC028020068B1D8 /* utility.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = utility.cpp; path = ../utility.cpp; sourceTree = "<group>"; };
+		8113FF0A1AC028020068B1D8 /* utility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = utility.h; path = ../utility.h; sourceTree = "<group>"; };
 		8156CB5D1AB99C2800EBDE34 /* imageholder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = imageholder.cpp; path = ../imageholder.cpp; sourceTree = "<group>"; };
 		8156CB5E1AB99C2800EBDE34 /* imageholder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imageholder.h; path = ../imageholder.h; sourceTree = "<group>"; };
 		815B9F7A1AA6F3C100C231A2 /* libboost_filesystem.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_filesystem.a; path = /usr/local/Cellar/boost/1.57.0/lib/libboost_filesystem.a; sourceTree = "<absolute>"; };
@@ -546,6 +549,8 @@
 		81B4F76E1AA5E42000F906F1 /* pointcloud */ = {
 			isa = PBXGroup;
 			children = (
+				8113FF091AC028020068B1D8 /* utility.cpp */,
+				8113FF0A1AC028020068B1D8 /* utility.h */,
 				81E57E1F1ABBEBAF00F6EAB7 /* fpoint.cpp */,
 				81E57E201ABBEBAF00F6EAB7 /* fpoint.h */,
 				8156CB5D1AB99C2800EBDE34 /* imageholder.cpp */,
@@ -620,6 +625,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8113FF0B1AC028020068B1D8 /* utility.cpp in Sources */,
 				81B4F7701AA5E42000F906F1 /* main.cpp in Sources */,
 				81E57E211ABBEBAF00F6EAB7 /* fpoint.cpp in Sources */,
 				8156CB5F1AB99C2800EBDE34 /* imageholder.cpp in Sources */,

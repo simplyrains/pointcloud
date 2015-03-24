@@ -183,7 +183,7 @@ using namespace std;
     }
 
 
-    // Calculate a heading/pitch of the following LCS coordinate based on the position of this pano
+    // Calculate the heading/pitch of the following coordinate based on the position of this pano
     double imageholder::computeHeading(double x, double y, double z){
         double rx = x - relative_x;
         double ry = y - relative_y;

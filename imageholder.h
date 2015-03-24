@@ -27,17 +27,26 @@ public:
     //void Print(ostream &output) const; // print the list to output
     
     cv::Vec3b getImageColorHP(double heading, double pitch);
+    //get the Mat that matches the following heading/pitch
+    cv::Mat getImage(double heading, double pitch);
+    
+    // Set the Latitude/Longitude of this pano
     void setPos(double lat_, double lng_);
     void setName(string name);
     double getLat();
     double getLng();
     string getName();
+    
+    // Set the relative position (meter) of this pano based on the first pano
     void setRelativePos(imageholder* base_img);
-    cv::Mat getImage(double heading, double pitch);
+    
     double getRelativeX();
     double getRelativeY();
+    
+    // Compute the heading/pitch of the following coordinate based on this pano
     double computeHeading(double x, double y, double z);
     double computePitch(double x, double y, double z);
+    
 private:
     double lat;
     double relative_x;

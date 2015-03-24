@@ -53,7 +53,7 @@ static void onMouseMiniWindow( int event, int x, int y, int f, void* param){
         mp->feature->remove(mp->holder);
         mp->feature->listMatch();
     }
-    //cv::circle( *smallpic, cv::Point( x, y ), 32.0, cv::Scalar( 0, 0, 255 ), 1, 8 );
+    //circle( *smallpic, cv::Point( x, y ), 32.0, cv::Scalar( 0, 0, 255 ), 1, 8 );
     //cv::imshow("Holder", *smallpic);
 }
 

@@ -21,6 +21,8 @@
       var sv = new google.maps.StreetViewService();
 
       var panorama;
+      var current_marker;
+      var base_location_marker;
 
       ///// ORAGMA MARK: Utility function
 
@@ -43,7 +45,7 @@
           clickOn(new google.maps.LatLng(lat, lng));
         }
 
-        function displayIndividual(pano_name){
+        function generateLink(pano_name){
           var output = "";
           var fov = parseInt(document.getElementById('fov').value);
           var apikey = document.getElementById('apikey').value;
@@ -56,6 +58,18 @@
             }
           }
           document.getElementById('output').value = output;
+
+          //Calculate Relative Heading+ Distance
+          if(base_location_marker !== undefined){
+            var r_heading = google.maps.geometry.spherical.computeHeading(base_location_marker.position, current_marker.position);
+            var distance = google.maps.geometry.spherical.computeDistanceBetween(base_location_marker.position, current_marker.position);
+            document.getElementById('r_heading').value = r_heading;
+            document.getElementById('distance').value = distance;
+          }
+          else{
+            document.getElementById('r_heading').value = 0;
+            document.getElementById('distance').value = 0;
+          }
         }
 
       ///// PRAGMA MARK: Googlemap Callback + Init ////////////////////////
@@ -98,7 +112,7 @@
             zIndex:99999999
 
           });
-          marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+          marker.setIcon('http://maps.google.com/mapfiles/ms/icons/orange-dot.png');
           marker_holder.push(marker);
 
           start_pos = pos;
@@ -122,9 +136,10 @@
             marker.setIcon('http://maps.google.com/mapfiles/ms/icons/yellow-dot.png');
             google.maps.event.addListener(marker, 'click', function() {
               this.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+              current_marker = this;
               var x_sv = new google.maps.StreetViewService();
               x_sv.getPanoramaById(this.title, processSVDataShowPano);
-              displayIndividual(this.title)
+              generateLink(this.title)
             });
             marker_holder.push(marker);
 
@@ -193,9 +208,10 @@
             google.maps.event.addListener(sub_marker, 'click', function() {
               
               this.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+              current_marker = this;
               var x_sv = new google.maps.StreetViewService();
               x_sv.getPanoramaById(this.title, processSVDataShowPano);
-              displayIndividual(this.title)
+              generateLink(this.title)
             });
 
             marker_holder.push(sub_marker);
@@ -218,6 +234,11 @@
         pom.click();
       }
 
+      function setBase(){
+        if(base_location_marker !== undefined) base_location_marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+        base_location_marker = current_marker;
+        base_location_marker.setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
+      }
       google.maps.event.addDomListener(window, 'load', initialize);
 
     </script>
@@ -227,10 +248,14 @@
     <div id="pano" style="width: 50%; height: 70%;float:left"></div>    
     <textarea id="output" style="width: 50%; height: 25%;float:left"></textarea>
         FOV: <input type="text" id="fov" value="30" /><br>
-        Location: <input type="text" id="location" value="-" /><br>
+        Location: <input type="text" id="location" value="-" />
+        <button type="button" onClick="setBase();">Set BASE Location</button><br>
+        Distance: <input type="text" id="distance" value="-" />
+        Relative Heading: <input type="text" id="r_heading" value="-" />
         API Key: <input type="text" id="apikey" value="AIzaSyCtsc1qMaipSMYWupcFddGzIku1ipcFgnA" />
         <button type="button" onClick="download('text.txt', document.getElementById('output').value);">Download as text.txt</button>
-        <button type="button" onClick="download(document.getElementById('location').value+'.txt', document.getElementById('output').value);">Download as "location".txt</button>
+        <button type="button" onClick="download(document.getElementById('location').value+','+document.getElementById('r_heading').value+','+
+          document.getElementById('distance').value+'.txt', document.getElementById('output').value);">Download as "location".txt</button>
 
   </body>
 </html>

@@ -10,6 +10,7 @@
 
 fpoint::fpoint(int id){
     this->id = id;
+    this->status = STATUS_NO_POS;
 }
 
 void fpoint::addHP(imageholder* pano, double heading, double pitch){
@@ -40,4 +41,27 @@ void fpoint::listMatch(){
     }
     else cout<<"<EMPTY>"<<endl;
     cout<<endl;
+}
+
+void fpoint::triangulate(){
+    //TODO: FILL IN SOMETHING
+    this->status = STATUS_TRIGULATED;
+}
+
+void fpoint::setStatus(uint status_){
+    status = status_;
+}
+
+
+uint fpoint::getStatus(){
+    return status;
+}
+
+void fpoint::setPosition(cv::Point3d pos){
+    position = pos;
+    status = STATUS_HAVE_POS;
+}
+
+cv::Point3d fpoint::getPosition(){
+    return position;
 }

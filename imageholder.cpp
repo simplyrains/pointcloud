@@ -199,6 +199,15 @@ using namespace std;
         return pitch;
     }
 
+    // return false if the coordinate is too close to the pano center
+    bool imageholder::is_projectable(double x, double y, double z){
+        double rx = x - relative_x;
+        double ry = y - relative_y;
+        double rz = z - relative_y;
+        if(rx*rx+ry*ry+rz*rz < 1.0) return 0;
+        return 1;
+    }
+
 #pragma mark getter/setter
 
     void imageholder::setName(string name_){

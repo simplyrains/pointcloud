@@ -18,25 +18,35 @@
 
 using namespace std;
 
+enum fpoint_type:uint{
+    STATUS_NO_POS,
+    STATUS_TRIGULATED,
+    STATUS_HAVE_POS
+};
+
 class fpoint{
 public:
     fpoint(int id);
     //map: imageholder + heading,pitch from that imageholder
     map<imageholder*, cv::Point2d> match;
-    cv::Point3d position;
     string name;
     int id;
-    int status; // solved or unsolved (triangulation)
+    int status; // solved or unsolved (triangulation) {0 = is not triangulated, 1 = triangulated}
     // method: add new match (imageholder, heading, pitch); << check with the exising map
+    
+    void setStatus(uint status);
+    uint getStatus();
+    void setPosition(cv::Point3d pos);
+    cv::Point3d getPosition();
     
     void listMatch();
     void addHP(imageholder* pano, double heading, double pitch);
     void addHP(imageholder* pano, cv::Point2d hp);
     bool remove(imageholder* pano);
     // method: solve triangulation: find position
-    // method: getheading (imageholder x) [if triangulated] calculate heading of this point if it were to show up on imageholder x
-    // method: getpitch (imageholder x) [if triangulated] calculate pitch of this point if it were to show up on imageholder x
+    void triangulate();
 private:
+    cv::Point3d position;
 };
 
 

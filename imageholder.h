@@ -46,7 +46,7 @@ public:
     // Compute the heading/pitch of the following coordinate based on this pano
     double computeHeading(double x, double y, double z);
     double computePitch(double x, double y, double z);
-    
+    bool is_projectable(double x, double y, double z);
 private:
     double lat;
     double relative_x;

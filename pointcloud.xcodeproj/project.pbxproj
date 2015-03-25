@@ -279,9 +279,9 @@
 		81E8B0261AB989520005F151 /* bash.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = bash.sh; path = google_downloader/bash.sh; sourceTree = "<group>"; };
 		81FBF1241AC0962500D62FD2 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		81FBF1261AC0962C00D62FD2 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
-		81FBFA101AC0F4D500D62FD2 /* libopencv_core.2.4.10.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_core.2.4.10.dylib; path = ../../../../usr/local/Cellar/opencv/2.4.10.1/lib/libopencv_core.2.4.10.dylib; sourceTree = "<group>"; };
-		81FBFA131AC0F4D500D62FD2 /* libopencv_highgui.2.4.10.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_highgui.2.4.10.dylib; path = ../../../../usr/local/Cellar/opencv/2.4.10.1/lib/libopencv_highgui.2.4.10.dylib; sourceTree = "<group>"; };
-		81FBFA161AC0F4D500D62FD2 /* libopencv_imgproc.2.4.10.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_imgproc.2.4.10.dylib; path = ../../../../usr/local/Cellar/opencv/2.4.10.1/lib/libopencv_imgproc.2.4.10.dylib; sourceTree = "<group>"; };
+		81FBFA101AC0F4D500D62FD2 /* libopencv_core.2.4.10.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_core.2.4.10.dylib; path = /usr/local/Cellar/opencv/2.4.10.1/lib/libopencv_core.2.4.10.dylib; sourceTree = "<absolute>"; };
+		81FBFA131AC0F4D500D62FD2 /* libopencv_highgui.2.4.10.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_highgui.2.4.10.dylib; path = /usr/local/Cellar/opencv/2.4.10.1/lib/libopencv_highgui.2.4.10.dylib; sourceTree = "<absolute>"; };
+		81FBFA161AC0F4D500D62FD2 /* libopencv_imgproc.2.4.10.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_imgproc.2.4.10.dylib; path = /usr/local/Cellar/opencv/2.4.10.1/lib/libopencv_imgproc.2.4.10.dylib; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -546,9 +546,7 @@
 		81B4F7631AA5E42000F906F1 = {
 			isa = PBXGroup;
 			children = (
-				81FBFA101AC0F4D500D62FD2 /* libopencv_core.2.4.10.dylib */,
-				81FBFA131AC0F4D500D62FD2 /* libopencv_highgui.2.4.10.dylib */,
-				81FBFA161AC0F4D500D62FD2 /* libopencv_imgproc.2.4.10.dylib */,
+				81DE295E1AC1D84E00331580 /* OpenCV */,
 				81FBF1261AC0962C00D62FD2 /* GLUT.framework */,
 				81FBF1241AC0962500D62FD2 /* OpenGL.framework */,
 				815BA0661AA6F51B00C231A2 /* boost */,
@@ -578,6 +576,16 @@
 				81B4F76F1AA5E42000F906F1 /* main.cpp */,
 			);
 			path = pointcloud;
+			sourceTree = "<group>";
+		};
+		81DE295E1AC1D84E00331580 /* OpenCV */ = {
+			isa = PBXGroup;
+			children = (
+				81FBFA101AC0F4D500D62FD2 /* libopencv_core.2.4.10.dylib */,
+				81FBFA131AC0F4D500D62FD2 /* libopencv_highgui.2.4.10.dylib */,
+				81FBFA161AC0F4D500D62FD2 /* libopencv_imgproc.2.4.10.dylib */,
+			);
+			name = OpenCV;
 			sourceTree = "<group>";
 		};
 		81E8B0251AB988B20005F151 /* Downloader */ = {

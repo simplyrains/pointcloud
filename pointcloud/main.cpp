@@ -48,12 +48,14 @@ static void onMouseMiniWindow( int event, int x, int y, int f, void* param){
         cout<<"- Heading: "<< heading<<endl<<"- Pitch: "<<pitch<<endl;
         mp->feature->addHP(mp->holder, heading, pitch);
         mp->feature->listMatch();
+        cv::Point3d p(mp->holder->getRelativeX(),mp->holder->getRelativeY(),0);
+        cout<<"DEBUG: SET POSITION "<<p<<endl;
+        mp->feature->setPosition(p);
     }
     else if (event == cv::EVENT_RBUTTONDOWN) {
         mp->feature->remove(mp->holder);
         mp->feature->listMatch();
     }
-    //circle( *smallpic, cv::Point( x, y ), 32.0, cv::Scalar( 0, 0, 255 ), 1, 8 );
     //cv::imshow("Holder", *smallpic);
 }
 
@@ -93,7 +95,7 @@ static void onMouse( int event, int x, int y, int f, void* param){
     double heading = (1.0/multiplication)*(x-hf/2);
     double pitch = (1.0/multiplication)*(y-pf/2);
     //
-    //cout << x << " " << y << "\t Heading: "<< heading << "\tPitch: "<< pitch << endl;
+    cout << x << " " << y << "\t Heading: "<< heading << "\tPitch: "<< pitch << endl;
     
     if (event == cv::EVENT_LBUTTONDOWN) {
         mp->wh = 400;
@@ -109,11 +111,11 @@ static void onMouse( int event, int x, int y, int f, void* param){
 }
 
 cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication){
-    //TODO: Refractor 360, 180
     int hf, pf;
     hf = multiplication*hfov;
     pf = multiplication*pfov;
     cv::Mat plane(pf+1,hf+1,CV_8UC3);
+    //render image
     for(double row = 0; row <= pf; ++row) {
         for(double col = 0; col <= hf; ++col) {
             double heading = (1.0/multiplication)*(col-hf/2);
@@ -122,6 +124,35 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
             plane.at<cv::Vec3b>(row,col) = imh->getImageColorHP(heading,pitch);
         }
         
+    }
+    //add triangulated point
+    for(auto point = all_fpoint.begin(); point!= all_fpoint.end(); point++){
+        uint status = (*point)->getStatus();
+        if(status==STATUS_TRIGULATED||status==STATUS_HAVE_POS){
+            
+            cv::Point3d lcs = (*point)->getPosition();
+            cout<<"Found pos: "<<lcs<<" from point"<<(*point)->id<<endl;
+            if(imh->is_projectable(lcs.x, lcs.y, lcs.z)){
+                double p_heading = imh->computeHeading(lcs.x, lcs.y, lcs.z);
+                double p_pitch = imh->computePitch(lcs.x, lcs.y, lcs.z);
+                cv::Point2d hp =cv::Point2d(p_heading*multiplication+hf/2,
+                                        p_pitch*multiplication+pf/2);
+                cout<<"HP: "<< hp<<endl;
+                
+                string text = to_string((*point)->id);
+                int fontFace = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
+                double fontScale = 2;
+                int thickness = 3;
+                int baseline=0;
+                baseline += thickness;
+                cv::putText(plane, text, hp, fontFace, fontScale, cv::Scalar::all(255), thickness, 8);
+                cv::circle(plane, hp, 10, cv::Scalar( 0, 0, 255 ));
+                
+            }
+            else{
+                cout<<"Point "<<(*point)->id<<" is ignored.";
+            }
+        }
     }
     return plane;
 }
@@ -231,78 +262,3 @@ int main(){
     normalrun();
     return 0;
 }
-/*
- imageholder imh = *new imageholder(30, string("google_output/"));
- 
- //TODO: Add error handle in case imageholder can't load image
- 
- int hf, pf, hfov, pfov;
- hfov = 360;
- pfov = 180;
- double multiplication = 4;
- hf = multiplication*hfov;
- pf = multiplication*pfov;
- 
- int o=0;
- while (true) {
- o+=10;
- cv::Mat plane(pf+1,hf+1,CV_8UC3);
- for(double row = 0; row <= pf; ++row) {
- for(double col = 0; col <= hf; ++col) {
- double heading = (1.0/multiplication)*(col-hf/2);
- double pitch = (1.0/multiplication)*(row-pf/2);
- //cout<<row-90<<" "<<col<<endl;
- plane.at<cv::Vec3b>(row,col) = imh.getImageColorHP(heading+o,pitch);
- }
- 
- }
- cv::imshow("x",plane);
- // Wait until user press some key
- cv::waitKey(0);
- }
- */
-
-
-//}
-//    fs::path directory("./google_output");
-//    fs::directory_iterator iter(directory), end;
-//
-//    fs::path x;
-//    for(;iter != end; ++iter)
-//    {
-//        if (iter->path().extension() == ".jpg")
-//        {
-//            x = iter->path();
-//            break;
-//        }
-//    }
-//    cv::Mat img = cv::imread(x.relative_path().string());
-//    //if fail to read the image
-//    if ( img.empty() )
-//    {
-//        cout << "Error loading the image" << endl;
-//        return -1;
-//    }
-//    cv::imshow("My Window", img);
-//
-//    // Wait until user press some key
-//    cv::waitKey(0);
-//
-//testColor(0, 90);
-//return 0;
-
-
-//    double x = 10;
-//    double y = 100;
-//    double z = 0;
-//    cout << "\n\n\n\n";
-//    cout << "(" << x << "," << y << "," << z << ") \n" << getHeading(x,y,z) << "," << getPitch(x,y,z) << "\t" << sqrt(x*x+y*y+z*z) << endl;
-//    double ay = getHeading(x,y,z);
-//    rotateZ(&x,&y,&z,-ay);
-//    rotateY(&x,&y,&z,180);
-//    cout << "(" << x << "," << y << "," << z << ") \n" << getHeading(x,y,z) << "," << getPitch(x,y,z) << "\t" << sqrt(x*x+y*y+z*z) << endl;
-//    rotateZ(&x,&y,&z, ay);
-//    cout << "(" << x << "," << y << "," << z << ") \n" << getHeading(x,y,z) << "," << getPitch(x,y,z) << "\t" << sqrt(x*x+y*y+z*z) << endl;
-
-//for(double i=-30;i<30;i+=1.5)
-//cout << i <<"\t"<<angleToPx(i,30,640)<<endl;

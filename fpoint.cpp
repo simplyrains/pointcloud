@@ -54,28 +54,30 @@ void fpoint::triangulate(){
         int i = 0;
         for(auto iter=match.begin(); iter!=match.end(); ++iter) {
             cout << iter->first->getName() << "/" <<iter->second << std::endl;
-            cv::Point3d start;
+            
+            double x,y,z; //tempolary variable
             imageholder *imh = iter->first;
-            start.x = imh->getRelativeX();
-            start.y = imh->getRelativeY();
-            start.z = 0;
+            x = imh->getRelativeX();
+            y = imh->getRelativeY();
+            z = 0;
+            st[i] = new cv::Point3d(x,y,z);
+
             double heading = iter->second.x;
-            double pitch = iter->second.x;
-            double x,y,z;
+            double pitch = iter->second.y;
             utility::HPtoLCS(heading, pitch, &x, &y, &z);
-            cv::Point3d direction(x,y,z);
-            dir[i] = &direction;
-            st[i] = &start;
+            dir[i] = new cv::Point3d(x,y,z);
+            cout<<i<<"\tSTART: "<<*st[i]<<"\tDIR: "<<*dir[i]<<endl;
             i++;
-            cout<<i<<"\tSTART: "<<start<<"\tDIR: "<<direction<<endl;
         }
         //Currently triangulate from point 1 and 2
         //TODO: change to triangulate from all point
         int j;
-        i=0; j=1;
         cv::Point3d u = *dir[0];
         cv::Point3d v = *dir[1];
-        cv::Point3d w = *(st[0])-*(st[1]);
+        cv::Point3d f = *st[0];
+        cv::Point3d k = *st[1];
+        cv::Point3d w = f-k;
+        cout<<"U"<<u<<endl<<"V"<<v<<endl<<"SU"<<f<<endl<<"SV"<<k<<endl<<"W"<<w<<endl;
         double a = u.x*u.x + u.y*u.y + u.z*u.z;
         double b = u.x*v.x + u.y*v.y + u.z*v.z;
         double c = v.x*v.x + v.y*v.y + v.z*v.z;
@@ -83,9 +85,10 @@ void fpoint::triangulate(){
         double e = v.x*w.x + v.y*w.y + v.z*w.z;
         double c1 = (b*e-c*d)/(a*c-b*b);
         double c2 = (a*e-b*d)/(a*c-b*b);
-        cv::Point3d pc = *st[0] + (*dir[0])*c1;
-        cv::Point3d qc = *st[1] + (*dir[1])*c2;
+        cv::Point3d pc = f + u*c1;
+        cv::Point3d qc = k + v*c2;
         cv::Point3d finalPos = pc*(0.5)+qc*(0.5);
+        cout<<"POS:"<<finalPos<<endl;
         setPosition(finalPos);
         this->status = STATUS_TRIGULATED;
     }

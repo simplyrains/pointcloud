@@ -67,6 +67,8 @@ using namespace std;
     }
 
     cv::Vec3b imageholder::getImageColorHP(double heading, double pitch){
+        // change from -90,90 to 90,-90
+        pitch = -pitch;
         utility::normalizeHP(&heading, &pitch);
         int i_h = utility::headingToClosestIndex(heading, fov);
         int i_p = utility::pitchToClosestIndex(pitch, fov);
@@ -127,7 +129,6 @@ using namespace std;
         lat = lat_;
         lng = lng_;
     }
-
     double imageholder::getLat(){
         return lat;
     }

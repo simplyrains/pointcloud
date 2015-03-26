@@ -1,3 +1,4 @@
+cd ../build/Debug/$1
 FILES=*.txt
 for f in $FILES
 do

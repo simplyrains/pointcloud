@@ -15,6 +15,22 @@
 namespace utility
 {
     double distance(double lat1, double lng1, double lat2, double lng2);
+    
+    void normalizeHP(double *heading, double *pitch);
+    double getHeading(double x, double y, double z);
+    double getPitch(double x, double y, double z);
+    void rotateZ(double *x, double *y, double *z, double angle);
+    void rotateY(double *x, double *y, double *z, double angle);
+    // Use to get index for the image with closest heading/pitch
+    int pitchToClosestIndex(double angle, double fov);
+    double indexToPitch(int index, double fov);
+    int headingToClosestIndex(double angle, double fov);
+    double indexToHeading(int index, double fov);
+    void rotateLCS(double *x, double *y, double *z, double heading_base, double heading, double pitch);
+    void HPtoLCS(double heading, double pitch, double *x, double *y, double *z);
+    double angleToPx(double angle, double fov, int imagewh);
+    double pxToAngle(double px, double fov, int imagewh);
+    
     void function2();
     void function3();
     

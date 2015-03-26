@@ -14,6 +14,7 @@
 #include <opencv2/core/core.hpp>
 #include <unordered_map>
 #include "imageholder.h"
+#include "utility.h"
 #include <map>
 
 using namespace std;

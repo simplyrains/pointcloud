@@ -48,9 +48,9 @@ static void onMouseMiniWindow( int event, int x, int y, int f, void* param){
         cout<<"- Heading: "<< heading<<endl<<"- Pitch: "<<pitch<<endl;
         mp->feature->addHP(mp->holder, heading, pitch);
         mp->feature->listMatch();
-        cv::Point3d p(mp->holder->getRelativeX(),mp->holder->getRelativeY(),0);
-        cout<<"DEBUG: SET POSITION "<<p<<endl;
-        mp->feature->setPosition(p);
+        //cv::Point3d p(mp->holder->getRelativeX(),mp->holder->getRelativeY(),0);
+        //cout<<"DEBUG: SET POSITION "<<p<<endl;
+        //mp->feature->setPosition(p);
     }
     else if (event == cv::EVENT_RBUTTONDOWN) {
         mp->feature->remove(mp->holder);
@@ -178,7 +178,7 @@ void normalrun(){
             cout << "Name = " << imh->getName() << endl;
             
             std::vector<std::string> x;
-            boost::split(x, name, boost::is_any_of("\t "));
+            boost::split(x, name, boost::is_any_of(","));
             imh->setPos(atof(x.at(0).c_str()), atof(x.at(x.size()-1).c_str()));
             
             if(count!=0) {

@@ -59,17 +59,20 @@
           }
           document.getElementById('output').value = output;
 
+          var r_heading, distance;
           //Calculate Relative Heading+ Distance
           if(base_location_marker !== undefined){
-            var r_heading = google.maps.geometry.spherical.computeHeading(base_location_marker.position, current_marker.position);
-            var distance = google.maps.geometry.spherical.computeDistanceBetween(base_location_marker.position, current_marker.position);
-            document.getElementById('r_heading').value = r_heading;
-            document.getElementById('distance').value = distance;
+            r_heading = google.maps.geometry.spherical.computeHeading(base_location_marker.position, current_marker.position);
+            distance = google.maps.geometry.spherical.computeDistanceBetween(base_location_marker.position, current_marker.position);
           }
           else{
-            document.getElementById('r_heading').value = 0;
-            document.getElementById('distance').value = 0;
+            r_heading = 0;
+            distance = 0;
           }
+          r_heading = r_heading.toFixed(7);
+          distance = distance.toFixed(7);
+          document.getElementById('r_heading').value = r_heading;
+          document.getElementById('distance').value = distance;
         }
 
       ///// PRAGMA MARK: Googlemap Callback + Init ////////////////////////

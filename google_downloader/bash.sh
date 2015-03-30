@@ -11,7 +11,7 @@ do
 	DIS=${arr[6]}.${arr[7]}
 	echo '   - 'LAT = $LAT
 	echo '   - 'LNG = $LNG
-	DIR_NAME=$LAT','$LNG','$HEADING','DIS
+	DIR_NAME=$LAT','$LNG','$HEADING','$DIS
 	mkdir $DIR_NAME
 	cd $DIR_NAME
 	for i in `cat ../$f` ; do curl -O $i ; done

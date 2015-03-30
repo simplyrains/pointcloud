@@ -143,12 +143,12 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
                 
                 string text = to_string((*point)->id);
                 int fontFace = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
-                double fontScale = 0.3;
+                double fontScale = 0.6;
                 int thickness = 0;
                 int baseline=0;
                 baseline += thickness;
-                cv::circle(plane, hp, 3, cv::Scalar( 0, 0, 0 ));
-                cv::circle(plane, hp, 1, cv::Scalar( 0, 0, 255 ));
+                cv::circle(plane, hp, 4, cv::Scalar( 0, 0, 0 ));
+                cv::circle(plane, hp, 2, cv::Scalar( 0, 0, 255 ));
                 cv::putText(plane, text, hp, fontFace, fontScale, cv::Scalar::all(255), thickness, 8);
 
             }
@@ -160,8 +160,15 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
     return plane;
 }
 
-void normalrun(){
-    fs::path p{"./OLD_google_output"};
+bool sortPano(imageholder *a, imageholder *b) {
+    double x = atof((a->getName()).c_str());
+    double y = atof((b->getName()).c_str());
+    return x < y;
+}
+
+
+void normalrun(string pathstring){
+    fs::path p{pathstring};
     fs::directory_iterator it{p};
     
     int count = 0;
@@ -177,12 +184,19 @@ void normalrun(){
             //TODO: Add error handle in case imageholder can't load image
             
             string name = it->path().filename().string();
-            imh->setName(name);
-            cout << "Name = " << imh->getName() << endl;
             
             std::vector<std::string> x;
             boost::split(x, name, boost::is_any_of(","));
             imh->setPos(atof(x.at(0).c_str()), atof(x.at(1).c_str()));
+            
+            //Use image relative heading as name
+            if(x.size()>2){
+                imh->setName(x.at(2).c_str());
+                cout << "Name = " << imh->getName() << endl;
+            }
+            else{
+                imh->setName(name);
+            }
             
             if(count!=0) {
                 imh->setRelativePos(all_pano[0]);
@@ -195,6 +209,8 @@ void normalrun(){
         }
         it++;
     }
+    sort(all_pano.begin(), all_pano.end(), sortPano);
+
     cout<< "Init complete!!"<<endl<<"- - - - - - - - - - - - - -"<<endl;
     
     //View pano
@@ -210,17 +226,18 @@ void normalrun(){
         params mp;
         mp.holder = imh;
         mp.feature = *f_iter;
-        
+        cout<<"\tPano"<<panoindex<<" name: "<<imh->getName()<<" pos:"<<imh->getRelativeX()<<","<<imh->getRelativeY()<<endl;
         cv::imshow(imh->getName(),plane);
         cv::setMouseCallback(imh->getName(),onMouse, (void*)&mp );
         // Wait until user press some key
         int key = cv::waitKey(0);
         
+
         switch (key) {
-            case KEY_L:{
+            case KEY_R:{
                 panoindex=(panoindex-1+(int)all_pano.size())%all_pano.size();
                 break;
-            }case KEY_R:{
+            }case KEY_L:{
                 panoindex=(panoindex+1)%all_pano.size();
                 break;
             }case KEY_U:{
@@ -249,7 +266,8 @@ void normalrun(){
                 }
                 break;
             }case KEY_ESC:{
-                do_loop = false;
+                (*f_iter)->clear();
+                cout<<"Clear all match from point"<<(*f_iter)->id<<endl;
                 break;
             }default:{
                 break;
@@ -257,11 +275,14 @@ void normalrun(){
         }
         
         cv::destroyAllWindows();
-        cout<<"At point: "<<(*f_iter)->id<<", "<<(*f_iter)->match.size()<<" matche(s)."<<endl;
-    }
+        cout<<"At point: "<<(*f_iter)->id<<", "<<(*f_iter)->match.size()<<" matche(s)."<<endl;    }
 }
 
 int main(){
-    normalrun();
+    cout<<"Enter folder name: ";
+    string pathstring;
+    cin >> pathstring;
+    pathstring = string("./")+pathstring;
+    normalrun(pathstring);
     return 0;
 }

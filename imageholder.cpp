@@ -46,7 +46,8 @@ using namespace std;
                 holder[i][size2-j-1] = cv::imread(name);
                 //if fail to read the image
                 if ( holder[i][size2-j-1].empty() ){
-                    cout << "Error loading the image: " << name;
+                    cout << "Error loading the image: " << name << " from "<<path<<endl;
+                    holder[i][size2-j-1] =cv::Mat(640, 640, CV_8UC3);
                 }
                 
             }

@@ -44,6 +44,7 @@ public:
     void addHP(imageholder* pano, double heading, double pitch);
     void addHP(imageholder* pano, cv::Point2d hp);
     bool remove(imageholder* pano);
+    void clear();
     // method: solve triangulation: find position
     void triangulate();
 private:

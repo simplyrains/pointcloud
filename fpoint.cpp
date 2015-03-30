@@ -45,6 +45,10 @@ void fpoint::listMatch(){
     cout<<endl;
 }
 
+void fpoint::clear(){
+    match.clear();
+}
+
 void fpoint::triangulate(){
     //TODO: FILL IN SOMETHING
     
@@ -71,26 +75,39 @@ void fpoint::triangulate(){
         }
         //Currently triangulate from point 1 and 2
         //TODO: change to triangulate from all point
-        int j;
-        cv::Point3d u = *dir[0];
-        cv::Point3d v = *dir[1];
-        cv::Point3d f = *st[0];
-        cv::Point3d k = *st[1];
-        cv::Point3d w = f-k;
-        cout<<"U"<<u<<endl<<"V"<<v<<endl<<"SU"<<f<<endl<<"SV"<<k<<endl<<"W"<<w<<endl;
-        double a = u.x*u.x + u.y*u.y + u.z*u.z;
-        double b = u.x*v.x + u.y*v.y + u.z*v.z;
-        double c = v.x*v.x + v.y*v.y + v.z*v.z;
-        double d = u.x*w.x + u.y*w.y + u.z*w.z;
-        double e = v.x*w.x + v.y*w.y + v.z*w.z;
-        double c1 = (b*e-c*d)/(a*c-b*b);
-        double c2 = (a*e-b*d)/(a*c-b*b);
-        cv::Point3d pc = f + u*c1;
-        cv::Point3d qc = k + v*c2;
-        cv::Point3d finalPos = pc*(0.5)+qc*(0.5);
-        cout<<"POS:"<<finalPos<<endl;
-        setPosition(finalPos);
-        this->status = STATUS_TRIGULATED;
+        
+        cv::Point3d avg = cv::Point3d(0,0,0);
+        int total = 0;
+        for(int i=0; i< match.size(); i++){
+            for(int j=0; j< match.size(); j++){
+                if(i!=j){
+                    cv::Point3d u = *dir[i];
+                    cv::Point3d v = *dir[j];
+                    cv::Point3d f = *st[i];
+                    cv::Point3d k = *st[j];
+                    cv::Point3d w = f-k;
+                    cout<<"i = "<<i<<" j = "<<j;
+                    cout<<"\tU"<<u<<" V"<<v<<endl;
+                    cout<<"\tSU"<<f<<" SV"<<k<<" W"<<w<<endl;
+                    double a = u.x*u.x + u.y*u.y + u.z*u.z;
+                    double b = u.x*v.x + u.y*v.y + u.z*v.z;
+                    double c = v.x*v.x + v.y*v.y + v.z*v.z;
+                    double d = u.x*w.x + u.y*w.y + u.z*w.z;
+                    double e = v.x*w.x + v.y*w.y + v.z*w.z;
+                    double c1 = (b*e-c*d)/(a*c-b*b);
+                    double c2 = (a*e-b*d)/(a*c-b*b);
+                    cv::Point3d pc = f + u*c1;
+                    cv::Point3d qc = k + v*c2;
+                    cv::Point3d finalPos = pc*(0.5)+qc*(0.5);
+                    cout<<"POS:"<<finalPos<<endl;
+                    setPosition(finalPos);
+                    this->status = STATUS_TRIGULATED;
+                    total++;
+                    avg = avg+finalPos;
+                }
+            }
+        }
+        avg = avg*(1.0/(double)total);
     }
 }
 

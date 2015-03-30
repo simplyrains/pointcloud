@@ -20,3 +20,4 @@ do
 	done
 	cd ..
 done
+cd ../../../google_downloader

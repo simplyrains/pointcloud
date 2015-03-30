@@ -40,6 +40,7 @@ public:
     void setPosition(cv::Point3d pos);
     cv::Point3d getPosition();
     
+    double calcError(string name1, string name2);
     void listMatch();
     void addHP(imageholder* pano, double heading, double pitch);
     void addHP(imageholder* pano, cv::Point2d hp);

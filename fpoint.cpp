@@ -49,6 +49,76 @@ void fpoint::clear(){
     match.clear();
 }
 
+double calcDistanceBetweenLines(cv::Point3d u, cv::Point3d v, cv::Point3d f, cv::Point3d k, cv::Point3d *center){
+    cv::Point3d w = f-k;
+    cout<<"\tU"<<u<<" V"<<v<<endl;
+    cout<<"\tSU"<<f<<" SV"<<k<<" W"<<w<<endl;
+    double a = u.x*u.x + u.y*u.y + u.z*u.z;
+    double b = u.x*v.x + u.y*v.y + u.z*v.z;
+    double c = v.x*v.x + v.y*v.y + v.z*v.z;
+    double d = u.x*w.x + u.y*w.y + u.z*w.z;
+    double e = v.x*w.x + v.y*w.y + v.z*w.z;
+    double c1 = (b*e-c*d)/(a*c-b*b);
+    double c2 = (a*e-b*d)/(a*c-b*b);
+    cv::Point3d pc = f + u*c1;
+    cv::Point3d qc = k + v*c2;
+    *center = pc*(0.5)+qc*(0.5);
+    double dx = (pc.x-qc.x);
+    double dy = (pc.y-qc.y);
+    double dz = (pc.z-qc.z);
+    double distance = dx*dx+dy*dy+dz*dz;
+    cout<<"DISTANCE = "<<distance<<endl;
+    return distance;
+}
+
+
+double fpoint::calcError(string name1, string name2){
+    //TODO: FILL IN SOMETHING
+    
+    cv::Point3d u,v,f,k;
+    bool has1 = false;
+    bool has2 = false;
+    for(auto iter=match.begin(); iter!=match.end(); ++iter) {
+        double x,y,z; //tempolary variable
+        imageholder *imh = iter->first;
+        string name = imh->getName();
+        
+        if(name.compare(name1) || name.compare(name2)){
+            x = imh->getRelativeX();
+            y = imh->getRelativeY();
+            z = 0;
+            double heading = iter->second.x;
+            double pitch = iter->second.y;
+            
+            //Starting Point
+            cv::Point3d s(x,y,z);
+            utility::HPtoLCS(heading, pitch, &x, &y, &z);
+            //Direction vector
+            cv::Point3d di(x,y,z);
+            
+            if(name.compare(name1)){
+                f = s;
+                u = di;
+                has1 = true;
+            }
+            else if(name.compare(name2)){
+                k = s;
+                v = di;
+                has2 = true;
+            }
+        }
+    }
+    
+    if(has1 && has2){
+        cv::Point3d center; //dummy variable
+        //Currently triangulate from point 1 and 2
+        //TODO: change to triangulate from all point
+        return calcDistanceBetweenLines(u, v, f, k, &center);
+    }
+    return 0;
+}
+
+
 void fpoint::triangulate(){
     //TODO: FILL IN SOMETHING
     
@@ -65,7 +135,7 @@ void fpoint::triangulate(){
             y = imh->getRelativeY();
             z = 0;
             st[i] = new cv::Point3d(x,y,z);
-
+            
             double heading = iter->second.x;
             double pitch = iter->second.y;
             utility::HPtoLCS(heading, pitch, &x, &y, &z);
@@ -85,29 +155,18 @@ void fpoint::triangulate(){
                     cv::Point3d v = *dir[j];
                     cv::Point3d f = *st[i];
                     cv::Point3d k = *st[j];
-                    cv::Point3d w = f-k;
-                    cout<<"i = "<<i<<" j = "<<j;
-                    cout<<"\tU"<<u<<" V"<<v<<endl;
-                    cout<<"\tSU"<<f<<" SV"<<k<<" W"<<w<<endl;
-                    double a = u.x*u.x + u.y*u.y + u.z*u.z;
-                    double b = u.x*v.x + u.y*v.y + u.z*v.z;
-                    double c = v.x*v.x + v.y*v.y + v.z*v.z;
-                    double d = u.x*w.x + u.y*w.y + u.z*w.z;
-                    double e = v.x*w.x + v.y*w.y + v.z*w.z;
-                    double c1 = (b*e-c*d)/(a*c-b*b);
-                    double c2 = (a*e-b*d)/(a*c-b*b);
-                    cv::Point3d pc = f + u*c1;
-                    cv::Point3d qc = k + v*c2;
-                    cv::Point3d finalPos = pc*(0.5)+qc*(0.5);
+                    
+                    cv::Point3d finalPos;
+                    calcDistanceBetweenLines(u, v, f, k, &finalPos);
                     cout<<"POS:"<<finalPos<<endl;
                     setPosition(finalPos);
-                    this->status = STATUS_TRIGULATED;
                     total++;
                     avg = avg+finalPos;
                 }
             }
         }
         avg = avg*(1.0/(double)total);
+        this->status = STATUS_TRIGULATED;
     }
 }
 

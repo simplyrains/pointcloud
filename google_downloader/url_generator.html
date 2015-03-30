@@ -123,6 +123,9 @@
 
           sv.getPanoramaByLocation(pos, 50, processSVData);
           update_position_text(start_pos);
+          
+          base_location_marker = marker;
+          base_location_marker.setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
         }
 
         // Nearest panorama, Yellow Marker. Called when clicking on any pos on gmap
@@ -174,6 +177,7 @@
               heading: heading,
               pitch: 0
             });
+            document.getElementById('disp_heading').value = heading;
             panorama.setVisible(true);
           } 
         }
@@ -237,11 +241,6 @@
         pom.click();
       }
 
-      function setBase(){
-        if(base_location_marker !== undefined) base_location_marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
-        base_location_marker = current_marker;
-        base_location_marker.setIcon('http://maps.google.com/mapfiles/ms/icons/blue-dot.png');
-      }
       google.maps.event.addDomListener(window, 'load', initialize);
 
     </script>
@@ -252,9 +251,8 @@
     <textarea id="output" style="width: 50%; height: 25%;float:left"></textarea>
         FOV: <input type="text" id="fov" value="30" /><br>
         Location: <input type="text" id="location" value="-" />
-        <button type="button" onClick="setBase();">Set BASE Location</button><br>
-        Distance: <input type="text" id="distance" value="-" />
-        Relative Heading: <input type="text" id="r_heading" value="-" />
+        Distance: <input type="text" id="distance" value="-" /><br>
+        Relative Heading: <input type="text" id="r_heading" value="-" /><br>
         API Key: <input type="text" id="apikey" value="AIzaSyCtsc1qMaipSMYWupcFddGzIku1ipcFgnA" />
         <button type="button" onClick="download('text.txt', document.getElementById('output').value);">Download as text.txt</button>
         <button type="button" onClick="download(document.getElementById('location').value+','+document.getElementById('r_heading').value+','+

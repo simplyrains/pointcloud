@@ -22,7 +22,7 @@ using namespace std;
 class imageholder {
 public:
     
-    imageholder(double fov_in,string path);                         // constructor; initialize the list to be empty
+    imageholder(double fov_in,string path, int id_);                         // constructor; initialize the list to be empty
     //void AddToEnd(int k);              // add k to the end of the list
     //void Print(ostream &output) const; // print the list to output
     
@@ -36,12 +36,17 @@ public:
     double getLat();
     double getLng();
     string getName();
+    void setID(int id_);
+    int getID();
     
     // Set the relative position (meter) of this pano based on the first pano
     void setRelativePos(imageholder* base_img);
     
     double getRelativeX();
     double getRelativeY();
+    //double getRelativeH();
+    void setRelativePos(double x, double y);
+    //void setRelativeH(double heading_);
     
     // Compute the heading/pitch of the following coordinate based on this pano
     double computeHeading(double x, double y, double z);
@@ -52,7 +57,9 @@ private:
     double relative_x;
     double lng;
     double relative_y;
+    double relative_heading;
     double fov;
+    int id;
     string name;
     cv::Mat **holder;
     double fraction;

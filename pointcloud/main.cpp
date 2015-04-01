@@ -10,11 +10,13 @@
 namespace fs = boost::filesystem;
 using namespace std;
 
-#define KEY_U 63232
-#define KEY_D 63233
-#define KEY_L 63234
-#define KEY_R 63235
+#define KEY_DIR_U 63232
+#define KEY_DIR_D 63233
+#define KEY_DIR_L 63234
+#define KEY_DIR_R 63235
 #define KEY_ESC 27
+#define KEY_C 99
+#define KEY_T 116
 
 // GLABAL VARIABLE
 // TODO:: Change to singleton
@@ -94,8 +96,7 @@ static void onMouse( int event, int x, int y, int f, void* param){
     cv::Mat plane(pf+1,hf+1,CV_8UC3);
     double heading = (1.0/multiplication)*(x-hf/2);
     double pitch = -(1.0/multiplication)*(y-pf/2);
-    //
-    cout << x << " " << y << "\t Heading: "<< heading << "\tPitch: "<< pitch << endl;
+    //cout << x << " " << y << "\t Heading: "<< heading << "\tPitch: "<< pitch << endl;
     
     if (event == cv::EVENT_LBUTTONDOWN) {
         mp->wh = 400;
@@ -166,6 +167,100 @@ bool sortPano(imageholder *a, imageholder *b) {
     return x < y;
 }
 
+double calcPairError(int a, int b){
+    double error = 0;
+    
+    for(auto point = all_fpoint.begin(); point!= all_fpoint.end(); point++){
+        error+=(*point)->calcError(a, b);
+    }
+    return error;
+}
+
+//Calculate the new error if we move the moved be r_x, r_y and r_heading from the original position
+double alignImh(imageholder *base, imageholder *moved, double x_offset, double y_offset, double h_offset){
+    //Backup old value
+    double r_x = moved->getRelativeX();
+    double r_y = moved->getRelativeY();
+    //double r_h = moved->getRelativeH();
+    //Set new value
+    moved->setRelativePos(r_x+x_offset, r_y+y_offset);
+    //moved->setRelativeH(r_h+h_offset);
+    //Calculate error
+    double err = calcPairError(base->getID(), moved->getID());
+    //Put back the old value
+    moved->setRelativePos(r_x, r_y);
+    //moved->setRelativeH(r_h);
+    return err;
+}
+
+double align(int a, int b){
+    cout<<"Aligning "<<a<<" - "<<b<<endl;
+    imageholder *imh_a, *imh_b;
+    imh_a = NULL;
+    imh_b = NULL;
+    for(auto imh = all_pano.begin(); imh!= all_pano.end(); imh++){
+        if((*imh)->getID()==a) imh_a = *imh;
+        if((*imh)->getID()==b) imh_b = *imh;
+    }
+    if(imh_a==NULL || imh_b==NULL){
+        cout<<"----------------- ERROR: NOPAIR"<<endl;
+        return 0;
+    }
+    double min_x_offset = 0, min_y_offset = 0, min_h_offset = 0, min_error = 0;
+    bool firstrun = true;
+    double scale_x = 0.01;
+    double scale_y = 0.01;
+    double scale_h = 1;
+    
+    double old_x = imh_b->getRelativeX();
+    double old_y = imh_b->getRelativeY();
+    //double old_heading = imh_b->getRelativeH();
+    
+    cout<<"Old Error: "<< alignImh(imh_a, imh_b, 0, 0, 0)<<endl;
+    
+    cout<<"Progress: ";
+    int progress = 0;
+    for(double x_offset = -5; x_offset<=5; x_offset+=scale_x){
+        for(double y_offset = -5; y_offset<=5; y_offset+=scale_y){
+            //for(double h_offset=-15; h_offset<=15; h_offset+= scale_h){
+            double h_offset = 0;
+                double err = alignImh(imh_a, imh_b, x_offset, y_offset, h_offset);
+                if(firstrun){
+                    firstrun = false;
+                    min_error = err;
+                    min_x_offset = x_offset;
+                    min_y_offset = y_offset;
+                    min_h_offset = h_offset;
+                }
+                else{
+                    //err < min_error
+                    if(min_error>err){
+                        min_error = err;
+                        min_x_offset = x_offset;
+                        min_y_offset = y_offset;
+                        min_h_offset = h_offset;
+                    }
+                }
+            //}
+        }
+        progress++;
+        if(progress%50==0) cout<<"x";
+    }
+    cout<<endl;
+    
+    cout<<"New offset: ("<<min_x_offset<<",\t"<<min_y_offset<<",\t"<<min_h_offset<<")\t\tERROR:"<<min_error<<endl;
+    //Set the new value
+    imh_b->setRelativePos(old_x + min_x_offset, old_y+min_y_offset);
+    //imh_b->setRelativeH(old_heading+min_h_offset);
+    return min_error;
+}
+
+void triangulateAll(){
+    
+    for(auto f = all_fpoint.begin(); f!= all_fpoint.end(); f++){
+        (*f)->triangulate();
+    }
+}
 
 void normalrun(string pathstring){
     fs::path p{pathstring};
@@ -180,7 +275,7 @@ void normalrun(string pathstring){
             
             cout<< path;
             
-            imageholder *imh = new imageholder(30, path);
+            imageholder *imh = new imageholder(30, path, count);
             //TODO: Add error handle in case imageholder can't load image
             
             string name = it->path().filename().string();
@@ -192,7 +287,7 @@ void normalrun(string pathstring){
             //Use image relative heading as name
             if(x.size()>2){
                 imh->setName(x.at(2).c_str());
-                cout << "Name = " << imh->getName() << endl;
+                cout << "ID = " << imh->getID() << endl;
             }
             else{
                 imh->setName(name);
@@ -226,28 +321,28 @@ void normalrun(string pathstring){
         params mp;
         mp.holder = imh;
         mp.feature = *f_iter;
-        cout<<"\tPano"<<panoindex<<" name: "<<imh->getName()<<" pos:"<<imh->getRelativeX()<<","<<imh->getRelativeY()<<endl;
-        cv::imshow(imh->getName(),plane);
-        cv::setMouseCallback(imh->getName(),onMouse, (void*)&mp );
+        cout<<"\tPano"<<all_pano[panoindex]->getID()<<" id: "<<imh->getID()<<" pos:"<<imh->getRelativeX()<<","<<imh->getRelativeY()<<endl;
+        cv::imshow(to_string(imh->getID()),plane);
+        cv::setMouseCallback(to_string(imh->getID()),onMouse, (void*)&mp );
         // Wait until user press some key
         int key = cv::waitKey(0);
         
 
         switch (key) {
-            case KEY_R:{
+            case KEY_DIR_R:{
                 panoindex=(panoindex-1+(int)all_pano.size())%all_pano.size();
                 break;
-            }case KEY_L:{
+            }case KEY_DIR_L:{
                 panoindex=(panoindex+1)%all_pano.size();
                 break;
-            }case KEY_U:{
+            }case KEY_DIR_U:{
                 if(f_iter!=all_fpoint.begin()){
                     f_iter--;
                     cout<<"Change to point: "<< (*f_iter)->id << "." << endl;
                 }
                 else cout<<"This is the first feature point."<<endl;
                 break;
-            }case KEY_D:{
+            }case KEY_DIR_D:{
                 auto next = f_iter+1;
                 if(next!=all_fpoint.end()){
                     f_iter++;
@@ -256,7 +351,7 @@ void normalrun(string pathstring){
                 else{
                     cout<<"Total f_point = " << (int)all_fpoint.size() << ", Add new point?"<<endl;
                     int newkey = cv::waitKey(0);
-                    if(newkey == KEY_D){
+                    if(newkey == KEY_DIR_D){
                         int id = (int)all_fpoint.size();
                         all_fpoint.push_back(new fpoint(id));
                         f_iter = all_fpoint.end();
@@ -269,7 +364,29 @@ void normalrun(string pathstring){
                 (*f_iter)->clear();
                 cout<<"Clear all match from point"<<(*f_iter)->id<<endl;
                 break;
+            }case KEY_T:{
+                //Triangulate
+                //(*f_iter)->triangulate();
+                //cout<<"Triangulate point"<<(*f_iter)->id<<endl;
+                triangulateAll();
+                break;
+            }case KEY_C:{
+                cout<<"Calibrate Pair: ";
+                int a, b;
+                cin >> a;
+                cout<<", ";
+                cin >> b;
+                double err = 0;
+                for(int i=0;i<5;i++){
+                    double new_err = align(a,b);
+                    if(new_err<1) break;
+                    if(abs(new_err-err)<0.1) break;
+                    err=new_err;
+                }
+                triangulateAll();
+                break;
             }default:{
+                cout<<"Type:"<<key<<endl;
                 break;
             }
         }

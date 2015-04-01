@@ -22,7 +22,6 @@ void fpoint::addHP(imageholder* pano, cv::Point2d hp){
     if(!(match.insert(make_pair(pano,hp))).second){
         match[pano] = hp;
     }
-    cout<<"{ TRIANGULATE POINT"<<id<<" }"<<endl;
     triangulate();
 }
 
@@ -39,7 +38,7 @@ void fpoint::listMatch(){
     cout<<"Listing match for P"<<id<<":"<<endl;
     if(!match.empty())
     for(auto iter=match.begin(); iter!=match.end(); ++iter) {
-        cout << iter->first->getName() << "/" <<iter->second << std::endl;
+        cout << iter->first->getID() << "/" <<iter->second << std::endl;
     }
     else cout<<"<EMPTY>"<<endl;
     cout<<endl;
@@ -51,8 +50,8 @@ void fpoint::clear(){
 
 double calcDistanceBetweenLines(cv::Point3d u, cv::Point3d v, cv::Point3d f, cv::Point3d k, cv::Point3d *center){
     cv::Point3d w = f-k;
-    cout<<"\tU"<<u<<" V"<<v<<endl;
-    cout<<"\tSU"<<f<<" SV"<<k<<" W"<<w<<endl;
+    //cout<<"\tU"<<u<<" V"<<v<<endl;
+    //cout<<"\tSU"<<f<<" SV"<<k<<" W"<<w<<endl;
     double a = u.x*u.x + u.y*u.y + u.z*u.z;
     double b = u.x*v.x + u.y*v.y + u.z*v.z;
     double c = v.x*v.x + v.y*v.y + v.z*v.z;
@@ -67,44 +66,54 @@ double calcDistanceBetweenLines(cv::Point3d u, cv::Point3d v, cv::Point3d f, cv:
     double dy = (pc.y-qc.y);
     double dz = (pc.z-qc.z);
     double distance = dx*dx+dy*dy+dz*dz;
-    cout<<"DISTANCE = "<<distance<<endl;
+    //cout<<"DISTANCE = "<<distance<<endl;
     return distance;
 }
 
 
-double fpoint::calcError(string name1, string name2){
+double fpoint::calcError(int id1, int id2){
     //TODO: FILL IN SOMETHING
     
     cv::Point3d u,v,f,k;
     bool has1 = false;
     bool has2 = false;
+    imageholder *i1, *i2;
+    i1=NULL;
+    i2=NULL;
+    double h1=0, h2=0, p1=0, p2=0;
     for(auto iter=match.begin(); iter!=match.end(); ++iter) {
         double x,y,z; //tempolary variable
         imageholder *imh = iter->first;
-        string name = imh->getName();
+        int id = imh->getID();
         
-        if(name.compare(name1) || name.compare(name2)){
+        if(id == id1 || id == id2){
             x = imh->getRelativeX();
             y = imh->getRelativeY();
             z = 0;
             double heading = iter->second.x;
             double pitch = iter->second.y;
-            
+            //heading += imh->getRelativeH();
             //Starting Point
             cv::Point3d s(x,y,z);
             utility::HPtoLCS(heading, pitch, &x, &y, &z);
             //Direction vector
             cv::Point3d di(x,y,z);
             
-            if(name.compare(name1)){
+            if(id == id1){
                 f = s;
                 u = di;
                 has1 = true;
+                i1 = imh;
+                h1 = heading;
+                p1 = pitch;
             }
-            else if(name.compare(name2)){
+            else if(id == id2){
                 k = s;
                 v = di;
                 has2 = true;
+                i2 = imh;
+                h2 = heading;
+                p2 = pitch;
             }
         }
     }
@@ -113,7 +122,12 @@ double fpoint::calcError(string name1, string name2){
         cv::Point3d center; //dummy variable
         //Currently triangulate from point 1 and 2
         //TODO: change to triangulate from all point
-        return calcDistanceBetweenLines(u, v, f, k, &center);
+        calcDistanceBetweenLines(u, v, f, k, &center);
+        double delta = abs(h1 - i1->computeHeading(center.x, center.y, center.z))
+        + abs(p1 - i1->computePitch(center.x, center.y, center.z))
+        + abs(h2 - i2->computeHeading(center.x, center.y, center.z))
+        + abs(p2 - i2->computePitch(center.x, center.y, center.z));
+        return delta;
     }
     return 0;
 }
@@ -123,11 +137,13 @@ void fpoint::triangulate(){
     //TODO: FILL IN SOMETHING
     
     if(match.size()>=2){
+        
+        cout<<"{ TRIANGULATE POINT"<<id<<" }"<<endl;
         cv::Point3d* dir[match.size()];
         cv::Point3d* st[match.size()];
         int i = 0;
         for(auto iter=match.begin(); iter!=match.end(); ++iter) {
-            cout << iter->first->getName() << "/" <<iter->second << std::endl;
+            cout << iter->first->getID() << "/" <<iter->second << std::endl;
             
             double x,y,z; //tempolary variable
             imageholder *imh = iter->first;
@@ -157,10 +173,11 @@ void fpoint::triangulate(){
                     cv::Point3d k = *st[j];
                     
                     cv::Point3d finalPos;
-                    calcDistanceBetweenLines(u, v, f, k, &finalPos);
+                    double err = calcDistanceBetweenLines(u, v, f, k, &finalPos);
                     cout<<"POS:"<<finalPos<<endl;
                     setPosition(finalPos);
                     total++;
+                    cout<<"Error ("<<i<<","<<j<<") = "<<err<<endl;
                     avg = avg+finalPos;
                 }
             }

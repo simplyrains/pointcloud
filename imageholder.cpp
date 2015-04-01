@@ -30,7 +30,7 @@ using namespace std;
 
 #pragma mark main code
 
-    imageholder::imageholder(double fov_in, string path){
+    imageholder::imageholder(double fov_in, string path, int id_){
         fraction = 1;
         fov = fov_in;
         int size = (int)ceil(360*2/fov);
@@ -52,9 +52,10 @@ using namespace std;
                 
             }
         }
-        
+        relative_heading = 0;
         relative_x = 0;
         relative_y = 0;
+        id = id_;
         cout << " : Reading Complete!"<<endl;
     }
 
@@ -94,20 +95,22 @@ using namespace std;
         relative_y = utility::distance(b_lat, b_lng, b_lat, lng);
     }
 
+    //computeHeading,computePitch, and is_projectable needs to take relative_x,relative_y, and relative_heading into account
+    // ^ used to triangulate
 
     // Calculate the heading/pitch of the following coordinate based on the position of this pano
     double imageholder::computeHeading(double x, double y, double z){
         double rx = x - relative_x;
         double ry = y - relative_y;
         double rz = z;
-        double heading = utility::getHeading(rx, ry, rz);
+        double heading = relative_heading + utility::getHeading(rx, ry, rz);
         return heading;
     }
     double imageholder::computePitch(double x, double y, double z){
         double rx = x - relative_x;
         double ry = y - relative_y;
         double rz = z;
-        double pitch = utility::getPitch(rx, ry, rz);
+        double pitch = relative_heading + utility::getPitch(rx, ry, rz);
         return pitch;
     }
 
@@ -138,6 +141,11 @@ using namespace std;
         return lng;
     }
 
+    void imageholder::setRelativePos(double x, double y){
+        relative_x = x;
+        relative_y = y;
+    }
+
     double imageholder::getRelativeX(){
         return relative_x;
     }
@@ -149,3 +157,19 @@ using namespace std;
     string imageholder::getName(){
         return name;
     }
+
+    int imageholder::getID(){
+        return id;
+    }
+
+    void imageholder::setID(int id_){
+        id = id_;
+    }
+
+//    void imageholder::setRelativeH(double heading_){
+//        relative_heading = heading_;
+//    }
+//
+//    double imageholder::getRelativeH(){
+//        return relative_heading;
+//    }

@@ -16,6 +16,8 @@
 #include <string>
 #include <iostream>
 #include <cmath>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -52,17 +54,21 @@ public:
     double computeHeading(double x, double y, double z);
     double computePitch(double x, double y, double z);
     bool is_projectable(double x, double y, double z);
+    
+    void saveData(std::ofstream& output);
+    void loadData(std::ifstream& input);
 private:
     double lat;
-    double relative_x;
     double lng;
-    double relative_y;
-    double relative_heading;
-    double fov;
     int id;
-    string name;
+    double fov;
     cv::Mat **holder;
     double fraction;
+    
+    double relative_x;
+    double relative_y;
+    double relative_heading;
+    string name;
     //static const int SIZE = 10;      // initial size of the array
 };
 

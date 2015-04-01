@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <fstream>
 #include "fpoint.h"
 #include "imageholder.h"
 #include "boost/filesystem.hpp"
@@ -17,11 +18,14 @@ using namespace std;
 #define KEY_ESC 27
 #define KEY_C 99
 #define KEY_T 116
+#define KEY_S 115
+#define KEY_L 108
 
 // GLABAL VARIABLE
 // TODO:: Change to singleton
-vector<imageholder*> all_pano;
 vector<fpoint*> all_fpoint;
+vector<imageholder*> all_pano;
+
 fpoint* currentpoint;
 imageholder *currentpano;
 double sw_base_heading;
@@ -37,6 +41,22 @@ typedef struct PARAMS{
     fpoint* feature;
     double fov;
 }params;
+
+imageholder* getImageHolder(string name_){
+    for(auto iter=all_pano.begin(); iter!=all_pano.end(); ++iter) {
+        string name = (*iter)->getName();
+        if(name == name_) return *iter;
+    }
+    return NULL;
+}
+
+fpoint* getFPoint(int id_){
+    for(auto iter=all_fpoint.begin(); iter!=all_fpoint.end(); ++iter) {
+        int id = (*iter)->getID();
+        if(id == id_) return *iter;
+    }
+    return NULL;
+}
 
 static void onMouseMiniWindow( int event, int x, int y, int f, void* param){
     params* mp = (params*)param;
@@ -55,7 +75,7 @@ static void onMouseMiniWindow( int event, int x, int y, int f, void* param){
         //mp->feature->setPosition(p);
     }
     else if (event == cv::EVENT_RBUTTONDOWN) {
-        mp->feature->remove(mp->holder);
+        mp->feature->remove(mp->holder->getName());
         mp->feature->listMatch();
     }
     //cv::imshow("Holder", *smallpic);
@@ -132,7 +152,7 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
         if(status==STATUS_TRIGULATED||status==STATUS_HAVE_POS){
             
             cv::Point3d lcs = (*point)->getPosition();
-            cout<<"Found pos: "<<lcs<<" from point"<<(*point)->id<<endl;
+            cout<<"Found pos: "<<lcs<<" from point"<<(*point)->getID()<<endl;
             if(imh->is_projectable(lcs.x, lcs.y, lcs.z)){
                 double p_heading = imh->computeHeading(lcs.x, lcs.y, lcs.z);
                 double p_pitch = imh->computePitch(lcs.x, lcs.y, lcs.z);
@@ -142,7 +162,7 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
                 double y =-p_pitch*multiplication+pf/2;
                 cv::Point2d hp =cv::Point2d(x,y);
                 
-                string text = to_string((*point)->id);
+                string text = to_string((*point)->getID());
                 int fontFace = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
                 double fontScale = 0.6;
                 int thickness = 0;
@@ -154,7 +174,7 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
 
             }
             else{
-                cout<<"Point "<<(*point)->id<<" is ignored.";
+                cout<<"Point "<<(*point)->getID()<<" is ignored.";
             }
         }
     }
@@ -262,7 +282,8 @@ void triangulateAll(){
     }
 }
 
-void normalrun(string pathstring){
+void initialization(string pathstring){
+    
     fs::path p{pathstring};
     fs::directory_iterator it{p};
     
@@ -278,20 +299,14 @@ void normalrun(string pathstring){
             imageholder *imh = new imageholder(30, path, count);
             //TODO: Add error handle in case imageholder can't load image
             
-            string name = it->path().filename().string();
+            string fname = it->path().filename().string();
             
             std::vector<std::string> x;
-            boost::split(x, name, boost::is_any_of(","));
+            boost::split(x, fname, boost::is_any_of(","));
             imh->setPos(atof(x.at(0).c_str()), atof(x.at(1).c_str()));
             
             //Use image relative heading as name
-            if(x.size()>2){
-                imh->setName(x.at(2).c_str());
-                cout << "ID = " << imh->getID() << endl;
-            }
-            else{
-                imh->setName(name);
-            }
+            imh->setName(x.at(4));
             
             if(count!=0) {
                 imh->setRelativePos(all_pano[0]);
@@ -306,12 +321,85 @@ void normalrun(string pathstring){
     }
     sort(all_pano.begin(), all_pano.end(), sortPano);
 
-    cout<< "Init complete!!"<<endl<<"- - - - - - - - - - - - - -"<<endl;
-    
+    cout<< endl<<"(づ￣ ³￣)づ <3 Init complete!!"<<endl<<"- - - - - - - - - - - - - -"<<endl;
+}
+
+void loadData(){
+    string filename;
+    cout<<"Load operation! Enter file name: ";
+    cin >> filename;
+    ifstream myfile (filename+".txt");
+
+    string temp;
+    if (myfile.is_open())
+    {
+        while ( myfile.good() )
+        {
+            myfile >> temp;
+            cout << temp << " ";
+            if(temp.substr(0,1)=="i"){
+                string name;
+                myfile >> name;
+                cout << name << endl;
+                imageholder *imh = getImageHolder(name);
+                if(imh == NULL){
+                    continue;
+                    //TODO: FIX THIS, the last line appear 2 times
+                    //cout<<"Error loading file name: " << name << ";_______;"<<endl;
+                    //return;
+                }
+                imh->loadData(myfile);
+
+            }
+            else if(temp.substr(0,1)=="p"){
+                int id;
+                myfile >> id;
+                cout << id << endl;
+                //Create new Fpoint with this data
+                fpoint *newPoint = new fpoint(id, &all_pano);
+                newPoint->loadData(myfile);
+                all_fpoint.push_back(newPoint);
+            }
+            else{
+                cout<<"ERROR!?!? <"<<temp<<">"<<endl<<endl;
+                return;
+            }
+        }
+        myfile.close();
+        cout << "Load complete!" << endl;
+    }
+    else cout << "Unable to load ;w;" << endl;
+}
+
+void saveData(){
+    string filename;
+    cout<<"Save operation! Enter file name: ";
+    cin >> filename;
+    ofstream myfile (filename+".txt");
+    if (myfile.is_open())
+    {
+        for(auto f = all_fpoint.begin(); f!= all_fpoint.end(); f++){
+            (*f)->saveData(myfile);
+        }
+        for(auto p = all_pano.begin(); p!= all_pano.end(); p++){
+            (*p)->saveData(myfile);
+        }
+        myfile.close();
+        cout << "Save complete!" << endl;
+    }
+    else cout << "Unable to save ;w;" << endl;
+}
+
+void normalrun(){
     //View pano
     int panoindex = 0;
     //TODO::FPOINT
-    all_fpoint.push_back(new fpoint(0));
+    
+    //Create 1 fpoint if there are no fpoint
+    //= Will not create any if the fpoint is loaded from the save :P
+    if(all_fpoint.size() == 0){
+        all_fpoint.push_back(new fpoint(0, &all_pano));
+    }
     auto f_iter = all_fpoint.begin();
     bool do_loop=true;
     while(do_loop){
@@ -327,7 +415,7 @@ void normalrun(string pathstring){
         // Wait until user press some key
         int key = cv::waitKey(0);
         
-
+        
         switch (key) {
             case KEY_DIR_R:{
                 panoindex=(panoindex-1+(int)all_pano.size())%all_pano.size();
@@ -338,7 +426,7 @@ void normalrun(string pathstring){
             }case KEY_DIR_U:{
                 if(f_iter!=all_fpoint.begin()){
                     f_iter--;
-                    cout<<"Change to point: "<< (*f_iter)->id << "." << endl;
+                    cout<<"Change to point: "<< (*f_iter)->getID()<< "." << endl;
                 }
                 else cout<<"This is the first feature point."<<endl;
                 break;
@@ -346,29 +434,32 @@ void normalrun(string pathstring){
                 auto next = f_iter+1;
                 if(next!=all_fpoint.end()){
                     f_iter++;
-                    cout<<"Change to point: "<< (*f_iter)->id << "." << endl;
+                    cout<<"Change to point: "<< (*f_iter)->getID()<< "." << endl;
                 }
                 else{
                     cout<<"Total f_point = " << (int)all_fpoint.size() << ", Add new point?"<<endl;
                     int newkey = cv::waitKey(0);
                     if(newkey == KEY_DIR_D){
                         int id = (int)all_fpoint.size();
-                        all_fpoint.push_back(new fpoint(id));
+                        all_fpoint.push_back(new fpoint(id, &all_pano));
                         f_iter = all_fpoint.end();
                         f_iter--;
-                        cout<<"Point: "<< (*f_iter)->id << " was added." << endl;
+                        cout<<"Point: "<< (*f_iter)->getID()<< " was added." << endl;
                     }
                 }
                 break;
             }case KEY_ESC:{
                 (*f_iter)->clear();
-                cout<<"Clear all match from point"<<(*f_iter)->id<<endl;
+                cout<<"Clear all match from point"<<(*f_iter)->getID()<<endl;
                 break;
             }case KEY_T:{
                 //Triangulate
                 //(*f_iter)->triangulate();
                 //cout<<"Triangulate point"<<(*f_iter)->id<<endl;
                 triangulateAll();
+                break;
+            }case KEY_S:{
+                saveData();
                 break;
             }case KEY_C:{
                 cout<<"Calibrate Pair: ";
@@ -392,7 +483,8 @@ void normalrun(string pathstring){
         }
         
         cv::destroyAllWindows();
-        cout<<"At point: "<<(*f_iter)->id<<", "<<(*f_iter)->match.size()<<" matche(s)."<<endl;    }
+        cout<<"At point: "<<(*f_iter)->getID()<<", "<<(*f_iter)->matchSize()<<" matche(s)."<<endl;
+    }
 }
 
 int main(){
@@ -400,6 +492,15 @@ int main(){
     string pathstring;
     cin >> pathstring;
     pathstring = string("./")+pathstring;
-    normalrun(pathstring);
+    //Init imageholder data
+    initialization(pathstring);
+    //Load imageholder data/point data
+    
+    cout<<"Load existing data ;w;? (y/n): ";
+    string ans;
+    cin >> ans;
+    if(ans=="y") loadData();
+    
+    normalrun();
     return 0;
 }

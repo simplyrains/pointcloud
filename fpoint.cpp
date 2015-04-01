@@ -8,24 +8,34 @@
 
 #include "fpoint.h"
 
-fpoint::fpoint(int id){
+//WARNING: DUPLICATE CODE WITH MAIN
+imageholder* fpoint::getImageHolder(string name_){
+    for(auto iter=(*all_pano).begin(); iter!=(*all_pano).end(); ++iter) {
+        string newName = (*iter)->getName();
+        if(newName == name_) return *iter;
+    }
+    return NULL;
+}
+
+fpoint::fpoint(int id, vector<imageholder*> *all_pano_){
     this->id = id;
+    this->all_pano = all_pano_;
     this->status = STATUS_NO_POS;
 }
 
 void fpoint::addHP(imageholder* pano, double heading, double pitch){
     cv::Point2d hp(heading, pitch);
-    addHP(pano, hp);
+    addHP(pano->getName(), hp);
 }
 
-void fpoint::addHP(imageholder* pano, cv::Point2d hp){
+void fpoint::addHP(string pano, cv::Point2d hp){
     if(!(match.insert(make_pair(pano,hp))).second){
         match[pano] = hp;
     }
     triangulate();
 }
 
-bool fpoint::remove(imageholder* pano){
+bool fpoint::remove(string pano){
     auto result = match.find(pano);
     if (result != match.end()) {
         match.erase(result);
@@ -38,7 +48,8 @@ void fpoint::listMatch(){
     cout<<"Listing match for P"<<id<<":"<<endl;
     if(!match.empty())
     for(auto iter=match.begin(); iter!=match.end(); ++iter) {
-        cout << iter->first->getID() << "/" <<iter->second << std::endl;
+        imageholder *imh = fpoint::getImageHolder(iter->first);
+        cout << imh->getID() << "/" <<iter->second << std::endl;
     }
     else cout<<"<EMPTY>"<<endl;
     cout<<endl;
@@ -83,7 +94,7 @@ double fpoint::calcError(int id1, int id2){
     double h1=0, h2=0, p1=0, p2=0;
     for(auto iter=match.begin(); iter!=match.end(); ++iter) {
         double x,y,z; //tempolary variable
-        imageholder *imh = iter->first;
+        imageholder *imh = fpoint::getImageHolder(iter->first);
         int id = imh->getID();
         
         if(id == id1 || id == id2){
@@ -143,10 +154,10 @@ void fpoint::triangulate(){
         cv::Point3d* st[match.size()];
         int i = 0;
         for(auto iter=match.begin(); iter!=match.end(); ++iter) {
-            cout << iter->first->getID() << "/" <<iter->second << std::endl;
+            imageholder *imh = fpoint::getImageHolder(iter->first);
+            cout << imh->getID() << "/" <<iter->second << std::endl;
             
             double x,y,z; //tempolary variable
-            imageholder *imh = iter->first;
             x = imh->getRelativeX();
             y = imh->getRelativeY();
             z = 0;
@@ -196,6 +207,15 @@ uint fpoint::getStatus(){
     return status;
 }
 
+void fpoint::setID(int id_){
+    id = id_;
+}
+
+
+int fpoint::getID(){
+    return id;
+}
+
 void fpoint::setPosition(cv::Point3d pos){
     position = pos;
     status = STATUS_HAVE_POS;
@@ -204,3 +224,55 @@ void fpoint::setPosition(cv::Point3d pos){
 cv::Point3d fpoint::getPosition(){
     return position;
 }
+
+unsigned long fpoint::matchSize(){
+    return match.size();
+}
+
+#pragma mark save
+
+void fpoint::saveData(ofstream &output){
+
+    output << "p ";
+    output << id << " ";
+    output << position.x << " " << position.y << " " << position.z << " ";
+    output << status << " ";
+    output << match.size() << endl;
+    
+    for(auto iter=match.begin(); iter!=match.end(); ++iter) {
+        string name_ = iter->first;
+        cv::Point2d pos_ = iter->second;
+        output << "  " << name_ << " " << pos_.x << " " << pos_.y << endl;
+    }
+}
+
+
+void fpoint::loadData(ifstream &input){
+    //output << "p ";
+    //output << id << " ";
+
+    //output << position.x << " " << position.y << " " << position.z << " ";
+    input >> position.x;
+    input >> position.y;
+    input >> position.z;
+    //output << status << " ";
+    input >> status;
+    //output << match.size() << " ";
+    int size;
+    input >> size;
+    
+    //for(auto iter=match.begin(); iter!=match.end(); ++iter) {
+    for(int i=0; i<size; i++){
+        //string name_ = iter->first;
+        string name_;
+        double x, y;
+        //output << name_ << " " << pos_.x << " " << pos_.y << endl;
+        //cv::Point2d pos_ = iter->second;
+        input >> name_;
+        input >> x;
+        input >> y;
+        cv::Point2d p(x, y);
+        addHP(name_, p);
+    }
+}
+

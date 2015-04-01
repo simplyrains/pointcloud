@@ -16,6 +16,8 @@
 #include "imageholder.h"
 #include "utility.h"
 #include <map>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -27,29 +29,38 @@ enum fpoint_type:uint{
 
 class fpoint{
 public:
-    fpoint(int id);
+    //Use for getImageHolder
+    vector<imageholder*> *all_pano;
+    imageholder* getImageHolder(string name);
+    
+    fpoint(int id, vector<imageholder*> *all_pano_);
     //map: imageholder + heading,pitch from that imageholder
-    map<imageholder*, cv::Point2d> match;
-    string name;
-    int id;
-    int status; // solved or unsolved (triangulation) {0 = is not triangulated, 1 = triangulated}
-    // method: add new match (imageholder, heading, pitch); << check with the exising map
     
     void setStatus(uint status);
     uint getStatus();
+    void setID(int id);
+    int getID();
     void setPosition(cv::Point3d pos);
     cv::Point3d getPosition();
     
+    unsigned long matchSize();
     double calcError(int id1, int id2);
     void listMatch();
     void addHP(imageholder* pano, double heading, double pitch);
-    void addHP(imageholder* pano, cv::Point2d hp);
-    bool remove(imageholder* pano);
+    void addHP(string pano, cv::Point2d hp);
+    bool remove(string pano);
     void clear();
     // method: solve triangulation: find position
     void triangulate();
+    
+    void saveData(std::ofstream& output);
+    void loadData(std::ifstream& input);
+
 private:
+    map<string, cv::Point2d> match;
     cv::Point3d position;
+    int id;
+    int status; // solved or unsolved (triangulation) {0 = is not triangulated, 1 = triangulated}
 };
 
 

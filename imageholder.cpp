@@ -123,6 +123,23 @@ using namespace std;
         return 1;
     }
 
+#pragma mark save
+
+    void imageholder::saveData(ofstream &output){
+        output << "i " << name << " " << relative_x << " " << relative_y << " " << relative_heading << endl;
+    }
+
+    void imageholder::loadData(ifstream &input){
+        //output << "i " << name << " " << relative_x << " " << relative_y << " " << relative_heading << endl;
+        double x, y, h;
+        input >> x;
+        input >> y;
+        input >> h;
+        setRelativePos(x, y);
+        //setRelativeHeading(h);
+    }
+
+
 #pragma mark getter/setter
 
     void imageholder::setName(string name_){

@@ -25,6 +25,13 @@
       var base_location_marker;
 
       ///// ORAGMA MARK: Utility function
+      
+      function download(filename, text) {
+          var pom = document.createElement('a');
+          pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+          pom.setAttribute('download', filename);
+          pom.click();
+      }
 
         function compare(a,b) {
           if (a.heading < b.heading)
@@ -73,6 +80,12 @@
           distance = distance.toFixed(7);
           document.getElementById('r_heading').value = r_heading;
           document.getElementById('distance').value = distance;
+          
+          var filename = document.getElementById('location').value+','+
+                        r_heading+','+
+                        distance+','+
+                        pano_name+'.txt';
+          download(filename, output);
         }
 
       ///// PRAGMA MARK: Googlemap Callback + Init ////////////////////////
@@ -232,15 +245,6 @@
           }
         }
 
-      ///// PRAGMA MARK: Other Code
-
-      function download(filename, text) {
-        var pom = document.createElement('a');
-        pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-        pom.setAttribute('download', filename);
-        pom.click();
-      }
-
       google.maps.event.addDomListener(window, 'load', initialize);
 
     </script>
@@ -255,8 +259,7 @@
         Relative Heading: <input type="text" id="r_heading" value="-" /><br>
         API Key: <input type="text" id="apikey" value="AIzaSyCtsc1qMaipSMYWupcFddGzIku1ipcFgnA" />
         <button type="button" onClick="download('text.txt', document.getElementById('output').value);">Download as text.txt</button>
-        <button type="button" onClick="download(document.getElementById('location').value+','+document.getElementById('r_heading').value+','+
-          document.getElementById('distance').value+'.txt', document.getElementById('output').value);">Download as "location".txt</button>
+        <button type="button" onClick="downloadLocation();">Download as "location".txt</button>
 
   </body>
 </html>

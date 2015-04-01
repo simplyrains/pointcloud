@@ -9,9 +9,10 @@ do
 	LNG=${arr[2]}.${arr[3]}
 	HEADING=${arr[4]}.${arr[5]}
 	DIS=${arr[6]}.${arr[7]}
+    ID=${arr[8]}
 	echo '   - 'LAT = $LAT
 	echo '   - 'LNG = $LNG
-	DIR_NAME=$LAT','$LNG','$HEADING','$DIS
+	DIR_NAME=$LAT','$LNG','$HEADING','$DIS','$ID
 	mkdir $DIR_NAME
 	cd $DIR_NAME
 	for i in `cat ../$f` ; do curl -O $i ; done

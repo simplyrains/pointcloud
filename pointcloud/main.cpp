@@ -20,10 +20,15 @@ using namespace std;
 #define KEY_T 116
 #define KEY_S 115
 #define KEY_L 108
+#define KEY_M 109
+
+
+#define RENDER_RESOLUTION 4
 
 // GLABAL VARIABLE
 // TODO:: Change to singleton
 vector<fpoint*> all_fpoint;
+vector<fpoint*> all_matched_point;
 vector<imageholder*> all_pano;
 
 fpoint* currentpoint;
@@ -46,6 +51,13 @@ imageholder* getImageHolder(string name_){
     for(auto iter=all_pano.begin(); iter!=all_pano.end(); ++iter) {
         string name = (*iter)->getName();
         if(name == name_) return *iter;
+    }
+    return NULL;
+}
+imageholder* getImageHolder(int id_){
+    for(auto iter=all_pano.begin(); iter!=all_pano.end(); ++iter) {
+        int id = (*iter)->getID();
+        if(id == id_) return *iter;
     }
     return NULL;
 }
@@ -110,7 +122,7 @@ static void onMouse( int event, int x, int y, int f, void* param){
     int hf, pf;
     int hfov = 360;
     int pfov = 180;
-    double multiplication = 4;
+    double multiplication = RENDER_RESOLUTION;
     hf = multiplication*hfov;
     pf = multiplication*pfov;
     cv::Mat plane(pf+1,hf+1,CV_8UC3);
@@ -135,17 +147,15 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
     int hf, pf;
     hf = multiplication*hfov;
     pf = multiplication*pfov;
-    cv::Mat plane(pf+1,hf+1,CV_8UC3);
-    //render image
-    for(double row = 0; row <= pf; ++row) {
-        for(double col = 0; col <= hf; ++col) {
-            double heading = (1.0/multiplication)*(col-hf/2);
-            double pitch = -(1.0/multiplication)*(row-pf/2);
-            //cout<<row-90<<" "<<col<<endl;
-            plane.at<cv::Vec3b>(row,col) = imh->getImageColorHP(heading,pitch);
-        }
-        
-    }
+
+    cv::Mat plane;
+    plane = (imh->getRendered()).clone();
+    vector<cv::KeyPoint> keypoints = imh->getKeypoints();
+    
+    // If you would like to draw the detected keypoint just to check
+    cv::Scalar keypointColor = cv::Scalar(255, 0, 0);     // Blue keypoints.
+    //drawKeypoints(plane, keypoints, plane, keypointColor, cv::DrawMatchesFlags::DEFAULT);
+
     //add triangulated point
     for(auto point = all_fpoint.begin(); point!= all_fpoint.end(); point++){
         uint status = (*point)->getStatus();
@@ -178,6 +188,24 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
             }
         }
     }
+    
+    
+    //add triangulated keypoint
+    for(auto point = all_matched_point.begin(); point!= all_matched_point.end(); point++){
+        cv::Point3d lcs = (*point)->getPosition();
+        if(imh->is_projectable(lcs.x, lcs.y, lcs.z)){
+            double p_heading = imh->computeHeading(lcs.x, lcs.y, lcs.z);
+            double p_pitch = imh->computePitch(lcs.x, lcs.y, lcs.z);
+            
+            double x =p_heading*multiplication+hf/2;
+            double y =-p_pitch*multiplication+pf/2;
+            cv::Point2d hp =cv::Point2d(x,y);
+                
+            cv::circle(plane, hp, 4, cv::Scalar( 0, 0, 0 ));
+            cv::circle(plane, hp, 2, cv::Scalar( 0, 255, 0 ));
+        }
+    }
+
     return plane;
 }
 
@@ -194,6 +222,73 @@ double calcPairError(int a, int b){
         error+=(*point)->calcError(a, b);
     }
     return error;
+}
+
+//DUPLICATE CODE: FPOINT CALCERROR
+double calcError(imageholder *i1, imageholder *i2, cv::Point2d point1, cv::Point2d point2){
+    //TODO: FILL IN SOMETHING
+    
+    double x,y,z;
+    
+    x = i1->getRelativeX();
+    y = i1->getRelativeY();
+    z = 0;
+    double h1 = point1.x;
+    double p1 = point1.y;
+    cv::Point3d f(x,y,z);
+    utility::HPtoLCS(h1, p1, &x, &y, &z);
+    //Direction vector
+    cv::Point3d u(x,y,z);
+    
+    x = i2->getRelativeX();
+    y = i2->getRelativeY();
+    z = 0;
+    double h2 = point2.x;
+    double p2 = point2.y;
+    cv::Point3d k(x,y,z);
+    utility::HPtoLCS(h2, p2, &x, &y, &z);
+    //Direction vector
+    cv::Point3d v(x,y,z);
+
+    cv::Point3d center; //dummy variable
+    //Currently triangulate from point 1 and 2
+    utility::calcDistanceBetweenLines(u, v, f, k, &center);
+    double delta = abs(h1 - i1->computeHeading(center.x, center.y, center.z))
+        + abs(p1 - i1->computePitch(center.x, center.y, center.z))
+        + abs(h2 - i2->computeHeading(center.x, center.y, center.z))
+        + abs(p2 - i2->computePitch(center.x, center.y, center.z));
+    return delta;
+}
+
+void match(int a, int b, double threshold){
+    
+    imageholder *imh_a = getImageHolder(a);
+    imageholder *imh_b = getImageHolder(b);
+    vector<cv::Point2d> key_a = imh_a->getKeyPointLocation();
+    vector<cv::Point2d> key_b = imh_b->getKeyPointLocation();
+    all_matched_point.clear();
+    
+    int i = 0;
+    for(auto k = key_a.begin(); k!= key_a.end(); k++,i++){
+        double min_match = -1;
+        cv::Point2d pair_b;
+        for(auto k_b = key_b.begin(); k_b!=key_b.end(); k_b++){
+            double error = calcError(imh_a, imh_b, *k, *k_b);
+            if(error<threshold){
+                if(min_match<0) min_match = error;
+                else if(error<min_match){
+                    min_match = error;
+                    pair_b = *k_b;
+                }
+            }
+        }
+        if(min_match>0){
+            fpoint *f = new fpoint(i, &all_pano);
+            f->addHP(imh_a, k->x, k->y);
+            f->addHP(imh_b, pair_b.x, pair_b.y);
+            all_matched_point.push_back(f);
+        }
+    }
 }
 
 //Calculate the new error if we move the moved be r_x, r_y and r_heading from the original position
@@ -230,7 +325,7 @@ double align(int a, int b){
     bool firstrun = true;
     double scale_x = 0.01;
     double scale_y = 0.01;
-    double scale_h = 1;
+    //double scale_h = 1;
     
     double old_x = imh_b->getRelativeX();
     double old_y = imh_b->getRelativeY();
@@ -282,6 +377,13 @@ void triangulateAll(){
     }
 }
 
+void triangulateAllKeypoint(){
+    
+    for(auto f = all_matched_point.begin(); f!= all_matched_point.end(); f++){
+        (*f)->triangulate();
+    }
+}
+
 void initialization(string pathstring){
     
     fs::path p{pathstring};
@@ -294,9 +396,9 @@ void initialization(string pathstring){
             string path = it->path().string();
             path = path+string("/");
             
-            cout<< path;
+            cout<< path<< endl;
             
-            imageholder *imh = new imageholder(30, path, count);
+            imageholder *imh = new imageholder(30, path, count, 360, 180, RENDER_RESOLUTION);
             //TODO: Add error handle in case imageholder can't load image
             
             string fname = it->path().filename().string();
@@ -404,7 +506,7 @@ void normalrun(){
     bool do_loop=true;
     while(do_loop){
         imageholder* imh = all_pano[panoindex];
-        cv::Mat plane = render(imh, 360, 180 ,4.0);
+        cv::Mat plane = render(imh, 360, 180 ,RENDER_RESOLUTION);
         
         params mp;
         mp.holder = imh;
@@ -475,6 +577,15 @@ void normalrun(){
                     err=new_err;
                 }
                 triangulateAll();
+                break;
+            }case KEY_M:{
+                cout<<"Match keypoint from Pair: ";
+                int a, b;
+                cin >> a;
+                cout<<", ";
+                cin >> b;
+                match(a, b, 0.8);
+                triangulateAllKeypoint();
                 break;
             }default:{
                 cout<<"Type:"<<key<<endl;

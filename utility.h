@@ -10,6 +10,7 @@
 #define __pointcloud__utility__
 
 #include <stdio.h>
+#include <opencv2/core/core.hpp>
 
 
 namespace utility
@@ -31,6 +32,8 @@ namespace utility
     double angleToPx(double angle, double fov, int imagewh);
     double pxToAngle(double px, double fov, int imagewh);
     
+    
+    double calcDistanceBetweenLines(cv::Point3d u, cv::Point3d v, cv::Point3d f, cv::Point3d k, cv::Point3d *center);
     void function2();
     void function3();
     

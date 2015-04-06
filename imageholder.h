@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/nonfree/features2d.hpp>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -24,7 +25,7 @@ using namespace std;
 class imageholder {
 public:
     
-    imageholder(double fov_in,string path, int id_);                         // constructor; initialize the list to be empty
+    imageholder(double fov_in,string path, int id_, double hfov, double pfov, double multiplication);                         // constructor; initialize the list to be empty
     //void AddToEnd(int k);              // add k to the end of the list
     //void Print(ostream &output) const; // print the list to output
     
@@ -49,6 +50,9 @@ public:
     //double getRelativeH();
     void setRelativePos(double x, double y);
     //void setRelativeH(double heading_);
+    cv::Mat getRendered();
+    vector<cv::KeyPoint> getKeypoints();
+    vector<cv::Point2d> getKeyPointLocation();
     
     // Compute the heading/pitch of the following coordinate based on this pano
     double computeHeading(double x, double y, double z);
@@ -64,6 +68,14 @@ private:
     double fov;
     cv::Mat **holder;
     double fraction;
+    cv::Mat rendered;
+    
+    // Compute the 128 dimension SIFT descriptor at each keypoint.
+    // Each row in "descriptors" correspond to the SIFT descriptor for each keypoint
+    cv::Mat descriptors;
+    vector<cv::KeyPoint> keypoints;
+    vector<cv::Point2d> keypointsHP;
+    void prerender(double hfov, double pfov, double multiplication);
     
     double relative_x;
     double relative_y;

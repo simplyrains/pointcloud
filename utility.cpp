@@ -129,4 +129,28 @@ namespace utility
         double a_median = angle*180/M_PI;
         return a_median;
     }
+    
+    
+    double calcDistanceBetweenLines(cv::Point3d u, cv::Point3d v, cv::Point3d f, cv::Point3d k, cv::Point3d *center){
+        cv::Point3d w = f-k;
+        //cout<<"\tU"<<u<<" V"<<v<<endl;
+        //cout<<"\tSU"<<f<<" SV"<<k<<" W"<<w<<endl;
+        double a = u.x*u.x + u.y*u.y + u.z*u.z;
+        double b = u.x*v.x + u.y*v.y + u.z*v.z;
+        double c = v.x*v.x + v.y*v.y + v.z*v.z;
+        double d = u.x*w.x + u.y*w.y + u.z*w.z;
+        double e = v.x*w.x + v.y*w.y + v.z*w.z;
+        double c1 = (b*e-c*d)/(a*c-b*b);
+        double c2 = (a*e-b*d)/(a*c-b*b);
+        cv::Point3d pc = f + u*c1;
+        cv::Point3d qc = k + v*c2;
+        *center = pc*(0.5)+qc*(0.5);
+        double dx = (pc.x-qc.x);
+        double dy = (pc.y-qc.y);
+        double dz = (pc.z-qc.z);
+        double distance = dx*dx+dy*dy+dz*dz;
+        //cout<<"DISTANCE = "<<distance<<endl;
+        return distance;
+    }
+
 }

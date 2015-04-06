@@ -28,34 +28,85 @@ using namespace std;
         else return cv::Vec3b(0,0,0);
     }
 
+    void imageholder::prerender(double hfov, double pfov, double multiplication){
+        int hf, pf;
+        hf = multiplication*hfov;
+        pf = multiplication*pfov;
+        cv::Mat plane(pf+1,hf+1,CV_8UC3);
+        //render image
+        for(double row = 0; row <= pf; ++row) {
+            for(double col = 0; col <= hf; ++col) {
+                double heading = (1.0/multiplication)*(col-hf/2);
+                double pitch = -(1.0/multiplication)*(row-pf/2);
+                //cout<<row-90<<" "<<col<<endl;
+                plane.at<cv::Vec3b>(row,col) = imageholder::getImageColorHP(heading,pitch);
+            }
+            
+        }
+        
+        
+        // Create smart pointer for SIFT feature detector.
+        cv::Ptr<cv::FeatureDetector> featureDetector = new cv::SiftFeatureDetector(
+                                                                                   0, // nFeatures
+                                                                                   4, // nOctaveLayers
+                                                                                   0.04, // contrastThreshold
+                                                                                   100, //edgeThreshold
+                                                                                   1.6 //sigma
+                                                                                   );
+        //Similarly, we create a smart pointer to the SIFT extractor.
+        cv::Ptr<cv::DescriptorExtractor> featureExtractor = cv::DescriptorExtractor::create("SIFT");
+        
+        // Detect the keypoints
+        featureDetector->detect(plane, keypoints); // NOTE: featureDetector is a pointer hence the '->'.
+        
+        // Compute the 128 dimension SIFT descriptor at each keypoint.
+        // Each row in "descriptors" correspond to the SIFT descriptor for each keypoint
+        featureExtractor->compute(plane, keypoints, descriptors);
+        
+        cout<<"COUNTER: "<<keypoints.size()<<endl;
+        rendered = plane;
+        
+        //Calculate keypointsHP
+        for(auto iter=keypoints.begin(); iter!=keypoints.end(); iter++){
+            double x = (*iter).pt.x;
+            double y = (*iter).pt.y;
+            double heading = (1.0/multiplication)*(x-hf/2);
+            double pitch = -(1.0/multiplication)*(y-pf/2);
+            keypointsHP.push_back(*new cv::Point2d(heading, pitch));
+        }
+    }
 #pragma mark main code
 
-    imageholder::imageholder(double fov_in, string path, int id_){
+    imageholder::imageholder(double fov_in, string path, int id_, double hfov, double pfov, double multiplication){
         fraction = 1;
         fov = fov_in;
         int size = (int)ceil(360*2/fov);
         int size2 = (int)ceil(180*2/fov) + 1;
         holder = new cv::Mat*[size];
+        
         for(int i=0;i<size;i++){
+            cout<<(i*100/size)<<"%, ";
             holder[i] = new cv::Mat[size2];
             for(int j=0; j<size2; j++){
                 int heading = (int)utility::indexToHeading(i,fov);
                 int pitch = (int)utility::indexToPitch(j,fov);
                 string name = path+to_string(pitch)+string(",")+to_string(heading)+string(".jpg");
                 //cout<<"Reading: "<<name<<endl;
-                holder[i][size2-j-1] = cv::imread(name);
-                //if fail to read the image
-                if ( holder[i][size2-j-1].empty() ){
+                cv::Mat input = cv::imread(name);
+                
+                holder[i][size2-j-1] = input.clone();
+                //if fail to read the imagex
+                if ( input.empty() ){
                     cout << "Error loading the image: " << name << " from "<<path<<endl;
                     holder[i][size2-j-1] =cv::Mat(640, 640, CV_8UC3);
                 }
-                
             }
         }
         relative_heading = 0;
         relative_x = 0;
         relative_y = 0;
         id = id_;
+        prerender(hfov, pfov, multiplication);
         cout << " : Reading Complete!"<<endl;
     }
 
@@ -183,6 +234,17 @@ using namespace std;
         id = id_;
     }
 
+    cv::Mat imageholder::getRendered(){
+        return rendered;
+    }
+
+    vector<cv::KeyPoint> imageholder::getKeypoints(){
+        return keypoints;
+    }
+
+    vector<cv::Point2d> imageholder::getKeyPointLocation(){
+        return keypointsHP;
+    }
 //    void imageholder::setRelativeH(double heading_){
 //        relative_heading = heading_;
 //    }

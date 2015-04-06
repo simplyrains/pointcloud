@@ -55,7 +55,6 @@ public:
     
     void saveData(std::ofstream& output);
     void loadData(std::ifstream& input);
-
 private:
     map<string, cv::Point2d> match;
     cv::Point3d position;

@@ -59,29 +59,6 @@ void fpoint::clear(){
     match.clear();
 }
 
-double calcDistanceBetweenLines(cv::Point3d u, cv::Point3d v, cv::Point3d f, cv::Point3d k, cv::Point3d *center){
-    cv::Point3d w = f-k;
-    //cout<<"\tU"<<u<<" V"<<v<<endl;
-    //cout<<"\tSU"<<f<<" SV"<<k<<" W"<<w<<endl;
-    double a = u.x*u.x + u.y*u.y + u.z*u.z;
-    double b = u.x*v.x + u.y*v.y + u.z*v.z;
-    double c = v.x*v.x + v.y*v.y + v.z*v.z;
-    double d = u.x*w.x + u.y*w.y + u.z*w.z;
-    double e = v.x*w.x + v.y*w.y + v.z*w.z;
-    double c1 = (b*e-c*d)/(a*c-b*b);
-    double c2 = (a*e-b*d)/(a*c-b*b);
-    cv::Point3d pc = f + u*c1;
-    cv::Point3d qc = k + v*c2;
-    *center = pc*(0.5)+qc*(0.5);
-    double dx = (pc.x-qc.x);
-    double dy = (pc.y-qc.y);
-    double dz = (pc.z-qc.z);
-    double distance = dx*dx+dy*dy+dz*dz;
-    //cout<<"DISTANCE = "<<distance<<endl;
-    return distance;
-}
-
-
 double fpoint::calcError(int id1, int id2){
     //TODO: FILL IN SOMETHING
     
@@ -133,7 +110,7 @@ double fpoint::calcError(int id1, int id2){
         cv::Point3d center; //dummy variable
         //Currently triangulate from point 1 and 2
         //TODO: change to triangulate from all point
-        calcDistanceBetweenLines(u, v, f, k, &center);
+        utility::calcDistanceBetweenLines(u, v, f, k, &center);
         double delta = abs(h1 - i1->computeHeading(center.x, center.y, center.z))
         + abs(p1 - i1->computePitch(center.x, center.y, center.z))
         + abs(h2 - i2->computeHeading(center.x, center.y, center.z))
@@ -167,7 +144,7 @@ void fpoint::triangulate(){
             double pitch = iter->second.y;
             utility::HPtoLCS(heading, pitch, &x, &y, &z);
             dir[i] = new cv::Point3d(x,y,z);
-            cout<<i<<"\tSTART: "<<*st[i]<<"\tDIR: "<<*dir[i]<<endl;
+            //cout<<i<<"\tSTART: "<<*st[i]<<"\tDIR: "<<*dir[i]<<endl;
             i++;
         }
         //Currently triangulate from point 1 and 2
@@ -184,11 +161,11 @@ void fpoint::triangulate(){
                     cv::Point3d k = *st[j];
                     
                     cv::Point3d finalPos;
-                    double err = calcDistanceBetweenLines(u, v, f, k, &finalPos);
-                    cout<<"POS:"<<finalPos<<endl;
+                    //double err = calcDistanceBetweenLines(u, v, f, k, &finalPos);
+                    //cout<<"POS:"<<finalPos<<endl;
                     setPosition(finalPos);
                     total++;
-                    cout<<"Error ("<<i<<","<<j<<") = "<<err<<endl;
+                    //cout<<"Error ("<<i<<","<<j<<") = "<<err<<endl;
                     avg = avg+finalPos;
                 }
             }
@@ -275,4 +252,3 @@ void fpoint::loadData(ifstream &input){
         addHP(name_, p);
     }
 }
-

@@ -21,6 +21,8 @@ fpoint::fpoint(int id, vector<imageholder*> *all_pano_){
     this->id = id;
     this->all_pano = all_pano_;
     this->status = STATUS_NO_POS;
+    cv::RNG rng(id);
+    this->color = cv::Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255));
 }
 
 void fpoint::addHP(imageholder* pano, double heading, double pitch){
@@ -32,6 +34,8 @@ void fpoint::addHP(string pano, cv::Point2d hp){
     if(!(match.insert(make_pair(pano,hp))).second){
         match[pano] = hp;
     }
+
+    this->color = cv::Scalar((int)hp.x, (int)(hp.y+90), 0);
     triangulate();
 }
 
@@ -126,13 +130,13 @@ void fpoint::triangulate(){
     
     if(match.size()>=2){
         
-        cout<<"{ TRIANGULATE POINT"<<id<<" }"<<endl;
+        if(id%500==0) cout<<"{ TRIANGULATE POINT"<<id<<" }"<<endl;
         cv::Point3d* dir[match.size()];
         cv::Point3d* st[match.size()];
         int i = 0;
         for(auto iter=match.begin(); iter!=match.end(); ++iter) {
             imageholder *imh = fpoint::getImageHolder(iter->first);
-            cout << imh->getID() << "/" <<iter->second << std::endl;
+            //cout << imh->getID() << "/" <<iter->second << std::endl;
             
             double x,y,z; //tempolary variable
             x = imh->getRelativeX();
@@ -161,7 +165,7 @@ void fpoint::triangulate(){
                     cv::Point3d k = *st[j];
                     
                     cv::Point3d finalPos;
-                    //double err = calcDistanceBetweenLines(u, v, f, k, &finalPos);
+                    utility::calcDistanceBetweenLines(u, v, f, k, &finalPos);
                     //cout<<"POS:"<<finalPos<<endl;
                     setPosition(finalPos);
                     total++;
@@ -171,6 +175,9 @@ void fpoint::triangulate(){
             }
         }
         avg = avg*(1.0/(double)total);
+        imageholder *hhh =getImageHolder(match.begin()->first);
+        cv::Vec3d hhh_color = hhh->getImageColorHP((match.begin()->second).x, (match.begin()->second).y);
+        color = cv::Scalar((int)hhh_color[0], (int)hhh_color[1], (int)hhh_color[2]);
         this->status = STATUS_TRIGULATED;
     }
 }
@@ -191,6 +198,10 @@ void fpoint::setID(int id_){
 
 int fpoint::getID(){
     return id;
+}
+
+cv::Scalar fpoint::getColor(){
+    return color;
 }
 
 void fpoint::setPosition(cv::Point3d pos){

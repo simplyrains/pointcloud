@@ -52,12 +52,15 @@ public:
     void clear();
     // method: solve triangulation: find position
     void triangulate();
+    cv::Scalar getColor();
     
     void saveData(std::ofstream& output);
     void loadData(std::ifstream& input);
 private:
     map<string, cv::Point2d> match;
     cv::Point3d position;
+    
+    cv::Scalar color;
     int id;
     int status; // solved or unsolved (triangulation) {0 = is not triangulated, 1 = triangulated}
 };

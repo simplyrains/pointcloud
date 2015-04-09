@@ -16,12 +16,13 @@ using namespace std;
 #define KEY_DIR_L 63234
 #define KEY_DIR_R 63235
 #define KEY_ESC 27
+#define KEY_SPACEBAR 32
 #define KEY_C 99
 #define KEY_T 116
 #define KEY_S 115
 #define KEY_L 108
 #define KEY_M 109
-
+#define KEY_A 97
 
 #define RENDER_RESOLUTION 4
 
@@ -151,10 +152,6 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
     cv::Mat plane;
     plane = (imh->getRendered()).clone();
     vector<cv::KeyPoint> keypoints = imh->getKeypoints();
-    
-    // If you would like to draw the detected keypoint just to check
-    cv::Scalar keypointColor = cv::Scalar(255, 0, 0);     // Blue keypoints.
-    //drawKeypoints(plane, keypoints, plane, keypointColor, cv::DrawMatchesFlags::DEFAULT);
 
     //add triangulated point
     for(auto point = all_fpoint.begin(); point!= all_fpoint.end(); point++){
@@ -162,11 +159,11 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
         if(status==STATUS_TRIGULATED||status==STATUS_HAVE_POS){
             
             cv::Point3d lcs = (*point)->getPosition();
-            cout<<"Found pos: "<<lcs<<" from point"<<(*point)->getID()<<endl;
+            //cout<<"Found pos: "<<lcs<<" from point"<<(*point)->getID()<<endl;
             if(imh->is_projectable(lcs.x, lcs.y, lcs.z)){
                 double p_heading = imh->computeHeading(lcs.x, lcs.y, lcs.z);
                 double p_pitch = imh->computePitch(lcs.x, lcs.y, lcs.z);
-                cout<<"H/P: "<< p_heading<<"/"<<p_pitch<<endl;
+                //cout<<"H/P: "<< p_heading<<"/"<<p_pitch<<endl;
                 
                 double x =p_heading*multiplication+hf/2;
                 double y =-p_pitch*multiplication+pf/2;
@@ -202,7 +199,7 @@ cv::Mat render(imageholder* imh, double hfov, double pfov, double multiplication
             cv::Point2d hp =cv::Point2d(x,y);
                 
             cv::circle(plane, hp, 4, cv::Scalar( 0, 0, 0 ));
-            cv::circle(plane, hp, 2, cv::Scalar( 0, 255, 0 ));
+            cv::circle(plane, hp, 2, (*point)->getColor());
         }
     }
 
@@ -226,7 +223,14 @@ double calcPairError(int a, int b){
 
 //DUPLICATE CODE: FPOINT CALCERROR
 double calcError(imageholder *i1, imageholder *i2, cv::Point2d point1, cv::Point2d point2){
-    //TODO: FILL IN SOMETHING
+    //Compare color
+    cv::Vec3d c1 = i1->getImageColorHP(point1.x, point1.y);
+    cv::Vec3d c2 = i2->getImageColorHP(point2.x, point2.y);
+    int sum = 0;
+    for(int i=0;i<3;i++){
+        sum+=abs(c1.val[i]-c2.val[i]);
+    }
+    if(sum>30) return 10000;
     
     double x,y,z;
     
@@ -371,10 +375,10 @@ double align(int a, int b){
 }
 
 void triangulateAll(){
-    
     for(auto f = all_fpoint.begin(); f!= all_fpoint.end(); f++){
         (*f)->triangulate();
     }
+    cout<<endl;
 }
 
 void triangulateAllKeypoint(){
@@ -408,7 +412,8 @@ void initialization(string pathstring){
             imh->setPos(atof(x.at(0).c_str()), atof(x.at(1).c_str()));
             
             //Use image relative heading as name
-            imh->setName(x.at(4));
+            if(x.size()==5) imh->setName(x.at(4));
+            else imh->setName(fname);
             
             if(count!=0) {
                 imh->setRelativePos(all_pano[0]);
@@ -492,6 +497,61 @@ void saveData(){
     else cout << "Unable to save ;w;" << endl;
 }
 
+void saveCloud(){
+    string filename;
+    cout<<"Save cloud operation! Enter file name: ";
+    cin >> filename;
+    ofstream myfile (filename+".ply");
+    myfile<<"ply"<<endl;
+    myfile<<"format ascii 1.0"<<endl;
+    myfile<<"element vertex "<<all_fpoint.size()+all_matched_point.size()+5*3*all_pano.size()<<endl;
+    myfile<<"property float x"<<endl;
+    myfile<<"property float y"<<endl;
+    myfile<<"property float z"<<endl;
+    myfile<<"property uchar red"<<endl;
+    myfile<<"property uchar green"<<endl;
+    myfile<<"property uchar blue"<<endl;
+    myfile<<"end_header"<<endl;
+    if (myfile.is_open())
+    {
+        for(auto f = all_fpoint.begin(); f!= all_fpoint.end(); f++){
+            cv::Point3d pos = (*f)->getPosition();
+            cv::Scalar color = (*f)->getColor();
+            myfile<<pos.x<<" "<<pos.y<<" "<<pos.z<<" ";
+            myfile<<color.val[0]<<" "<<color.val[1]<<" "<<color.val[2]<<endl;
+        }
+        for(auto f = all_matched_point.begin(); f!= all_matched_point.end(); f++){
+            cv::Point3d pos = (*f)->getPosition();
+            cv::Scalar color = (*f)->getColor();
+            myfile<<pos.x<<" "<<pos.y<<" "<<pos.z<<" ";
+            myfile<<color.val[0]<<" "<<color.val[1]<<" "<<color.val[2]<<endl;
+        }
+        for(auto f = all_pano.begin(); f!= all_pano.end(); f++){
+            double x = (*f)->getRelativeX();
+            double y = (*f)->getRelativeY();
+            double z = 0;
+            int c = 127+((*f)->getID()*128)/all_pano.size();
+            for(double dx = 0; dx<5;dx+=1){
+                myfile<<x+0.2*dx<<" "<<y<<" "<<z<<" ";
+                myfile<<c<<" "<<0<<" "<<0<<endl;
+            }
+        
+            for(double dx = 0; dx<5;dx+=1){
+                myfile<<x<<" "<<y+0.2*dx<<" "<<z<<" ";
+                myfile<<0<<" "<<c<<" "<<0<<endl;
+            }
+    
+            for(double dx = 0; dx<5;dx+=1){
+                myfile<<x<<" "<<y<<" "<<z+0.2*dx<<" ";
+                myfile<<0<<" "<<0<<" "<<c<<endl;
+            }
+        }
+        myfile.close();
+        cout << "Save complete!" << endl;
+    }
+    else cout << "Unable to save ;w;" << endl;
+}
+
 void normalrun(){
     //View pano
     int panoindex = 0;
@@ -511,7 +571,7 @@ void normalrun(){
         params mp;
         mp.holder = imh;
         mp.feature = *f_iter;
-        cout<<"\tPano"<<all_pano[panoindex]->getID()<<" id: "<<imh->getID()<<" pos:"<<imh->getRelativeX()<<","<<imh->getRelativeY()<<endl;
+        cout<<"\tPano"<<all_pano[panoindex]->getID()<<" id: "<<imh->getID()<<" name:"<<imh->getName()<<endl;
         cv::imshow(to_string(imh->getID()),plane);
         cv::setMouseCallback(to_string(imh->getID()),onMouse, (void*)&mp );
         // Wait until user press some key
@@ -550,6 +610,13 @@ void normalrun(){
                     }
                 }
                 break;
+            }case KEY_SPACEBAR:{
+                int id = (int)all_fpoint.size();
+                all_fpoint.push_back(new fpoint(id, &all_pano));
+                f_iter = all_fpoint.end();
+                f_iter--;
+                cout<<"Point: "<< (*f_iter)->getID()<< " was added." << endl;
+                break;
             }case KEY_ESC:{
                 (*f_iter)->clear();
                 cout<<"Clear all match from point"<<(*f_iter)->getID()<<endl;
@@ -561,6 +628,9 @@ void normalrun(){
                 triangulateAll();
                 break;
             }case KEY_S:{
+                saveCloud();
+                break;
+            }case KEY_A:{
                 saveData();
                 break;
             }case KEY_C:{

@@ -23,6 +23,9 @@ using namespace std;
 #define KEY_L 108
 #define KEY_M 109
 #define KEY_A 97
+#define KEY_3 51
+#define KEY_4 52
+
 
 #define RENDER_RESOLUTION 4
 
@@ -31,6 +34,7 @@ using namespace std;
 vector<fpoint*> all_fpoint;
 vector<fpoint*> all_matched_point;
 vector<imageholder*> all_pano;
+vector<pair<cv::Point3i, string>> mesh;
 
 fpoint* currentpoint;
 imageholder *currentpano;
@@ -268,31 +272,100 @@ void match(int a, int b, double threshold){
     
     imageholder *imh_a = getImageHolder(a);
     imageholder *imh_b = getImageHolder(b);
-    vector<cv::Point2d> key_a = imh_a->getKeyPointLocation();
-    vector<cv::Point2d> key_b = imh_b->getKeyPointLocation();
-    all_matched_point.clear();
+
+    // corresponded points
+    std::vector<cv::DMatch> matches, goodMatch;
+    // L2 distance based matching. Brute Force Matching
+    cv::FlannBasedMatcher matcher;
+    // display of corresponding points
+    matcher.match( imh_a->descriptors, imh_b->descriptors, matches );
+    // matching result
+    cv::Mat result;
     
-    int i = 0;
-    for(auto k = key_a.begin(); k!= key_a.end(); k++,i++){
-        double min_match = -1;
-        cv::Point2d pair_b;
-        for(auto k_b = key_b.begin(); k_b!=key_b.end(); k_b++){
-            double error = calcError(imh_a, imh_b, *k, *k_b);
-            if(error<threshold){
-                if(min_match<0) min_match = error;
-                else if(error<min_match){
-                    min_match = error;
-                    pair_b = *k_b;
-                }
-            }
-        }
-        if(min_match>0){
-            fpoint *f = new fpoint(i, &all_pano);
-            f->addHP(imh_a, k->x, k->y);
-            f->addHP(imh_b, pair_b.x, pair_b.y);
-            all_matched_point.push_back(f);
+    double max_dist = 0; double min_dist = 100;
+    
+    //-- Quick calculation of max and min distances between keypoints
+    for( int i = 0; i < imh_a->descriptors.rows; i++ )
+    { double dist = matches[i].distance;
+        if( dist < min_dist ) min_dist = dist;
+        if( dist > max_dist ) max_dist = dist;
+    }
+    
+    printf("-- Max dist : %f \n", max_dist );
+    printf("-- Min dist : %f \n", min_dist );
+    
+    //-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
+    //-- or a small arbitary value ( 0.02 ) in the event that min_dist is very
+    //-- small)
+    //-- PS.- radiusMatch can also be used here.
+    std::vector< cv::DMatch > good_matches;
+    
+    for( int i = 0; i < imh_a->descriptors.rows; i++ )
+    {
+        if( matches[i].distance <= max(2*min_dist, 0.02) ){
+            good_matches.push_back( matches[i]);
         }
     }
+    
+    //-- Draw only "good" matches
+    drawMatches( imh_a->getRendered(), imh_a->getKeypoints(), imh_b->getRendered(), imh_b->getKeypoints(), good_matches, result );
+    //-- Show detected matches
+    imshow( "Good Matches", result );
+    cv::waitKey(0);
+    //TODO: Refractor dupliccate code
+    all_matched_point.clear();
+    double hfov = 360;
+    double pfov = 180;
+    double multiplication = RENDER_RESOLUTION;
+    int hf, pf;
+    hf = multiplication*hfov;
+    pf = multiplication*pfov;
+    for( int i = 0; i < (int)good_matches.size(); i++ )
+    {
+        int a_id = good_matches[i].queryIdx;
+        int b_id = good_matches[i].trainIdx;
+        
+        double xa = (imh_a->getKeypoints())[a_id].pt.x;
+        double ya = (imh_a->getKeypoints())[a_id].pt.y;
+        double xb = (imh_b->getKeypoints())[b_id].pt.x;
+        double yb = (imh_b->getKeypoints())[b_id].pt.y;
+        
+        double ha = (1.0/multiplication)*(xa-hf/2);
+        double pa = -(1.0/multiplication)*(ya-pf/2);
+        double hb = (1.0/multiplication)*(xb-hf/2);
+        double pb = -(1.0/multiplication)*(yb-pf/2);
+        fpoint *f = new fpoint(i, &all_pano);
+        f->addHP(imh_a, ha, pa);
+        f->addHP(imh_b, hb, pb);
+        f->triangulate();
+        all_matched_point.push_back(f);
+
+    }
+
+    //for(auto f=matches.begin(); f!=matches.end(); f++){
+    //}
+//    
+//    int i = 0;
+//    for(auto k = key_a.begin(); k!= key_a.end(); k++,i++){
+//        double min_match = -1;
+//        cv::Point2d pair_b;
+//        for(auto k_b = key_b.begin(); k_b!=key_b.end(); k_b++){
+//            double error = calcError(imh_a, imh_b, *k, *k_b);
+//            if(error<threshold){
+//                if(min_match<0) min_match = error;
+//                else if(error<min_match){
+//                    min_match = error;
+//                    pair_b = *k_b;
+//                }
+//            }
+//        }
+//        if(min_match>0){
+//            fpoint *f = new fpoint(i, &all_pano);
+//            f->addHP(imh_a, k->x, k->y);
+//            f->addHP(imh_b, pair_b.x, pair_b.y);
+//            all_matched_point.push_back(f);
+//        }
+//    }
 }
 
 //Calculate the new error if we move the moved be r_x, r_y and r_heading from the original position
@@ -467,6 +540,16 @@ void loadData(){
                 newPoint->loadData(myfile);
                 all_fpoint.push_back(newPoint);
             }
+            else if(temp.substr(0,1)=="m"){
+                int x, y, z;
+                string name;
+                myfile >> x;
+                myfile >> y;
+                myfile >> z;
+                myfile >> name;
+                mesh.push_back(make_pair(cv::Point3i(x,y,z), name));
+                cout<<"m "<<cv::Point3i(x,y,z)<<" "<<name<<endl;
+            }
             else{
                 cout<<"ERROR!?!? <"<<temp<<">"<<endl<<endl;
                 return;
@@ -488,6 +571,10 @@ void saveData(){
         for(auto f = all_fpoint.begin(); f!= all_fpoint.end(); f++){
             (*f)->saveData(myfile);
         }
+        for(auto p = mesh.begin(); p!= mesh.end(); p++){
+            cv::Point3i pos = p->first;
+            myfile<<"m "<<pos.x<<" "<<pos.y<<" "<<pos.z<<" "<<p->second<<endl;
+        }
         for(auto p = all_pano.begin(); p!= all_pano.end(); p++){
             (*p)->saveData(myfile);
         }
@@ -498,13 +585,57 @@ void saveData(){
 }
 
 void saveCloud(){
+    double precision;
     string filename;
     cout<<"Save cloud operation! Enter file name: ";
     cin >> filename;
     ofstream myfile (filename+".ply");
+    cout<<"Precision (0.01 ~ 0.1): ";
+    cin >> precision;
+    if(precision>1) precision = 0.1;
+    if(precision<0.01) precision = 0.01;
+
+    //Generate detail mesh-like cloud
+    vector<pair<cv::Point3d, cv::Vec3d>> detail;
+    for(auto det=mesh.begin(); det!=mesh.end(); det++){
+        imageholder *imh = getImageHolder(det->second);
+        cv::Point3d pa = all_fpoint.at((det->first).x)->getPosition();
+        cv::Point3d pb = all_fpoint.at((det->first).y)->getPosition();
+        cv::Point3d pc = all_fpoint.at((det->first).z)->getPosition();
+        
+        //comparePoint(&pa, &pb, &pc);
+        cv::Point3d ca = pc-pa;
+        cv::Point3d ba = pb-pa;
+        double size_ca = sqrt(ca.x*ca.x+ca.y*ca.y+ca.z*ca.z);
+        double size_ba = sqrt(ba.x*ba.x+ba.y*ba.y+ba.z*ba.z);
+        cv::Point3d u = ca*(1.0/size_ca);
+        cv::Point3d v = ba*(1.0/size_ba);
+        cout<<"Create simple mesh: "<<pa<<" > "<<pb<<" > "<<pc<<endl;
+        cout<<"Distance: "<<size_ca<<"/"<<size_ba<<" "<<endl<<endl;
+        int size= 0;
+        for(double i = 0; i<size_ba; i+=precision){
+            for(double j = 0; j<size_ca; j+=precision){
+                if(i/size_ba + j/size_ca < 1){
+                    cv::Point3d pos = pa+u*j+v*i;
+                    double heading = imh->computeHeading(pos.x, pos.y, pos.z);
+                    double pitch = imh->computePitch(pos.x, pos.y, pos.z);
+                    cv::Vec3d color = imh->getImageColorHP(heading, pitch);
+                    detail.push_back(make_pair(pos, color));
+                    size++;
+                    //if(size%100==0) cout<<size<<endl;
+                }
+            }
+        }
+        cout<<"Total 3d point: "<<size<<endl;
+
+    }
+    
     myfile<<"ply"<<endl;
     myfile<<"format ascii 1.0"<<endl;
-    myfile<<"element vertex "<<all_fpoint.size()+all_matched_point.size()+5*3*all_pano.size()<<endl;
+    unsigned long point_number = 0;
+    point_number += all_fpoint.size()+all_matched_point.size()+detail.size();
+    point_number += 5*3*all_pano.size();
+    myfile<<"element vertex "<<point_number<<endl;
     myfile<<"property float x"<<endl;
     myfile<<"property float y"<<endl;
     myfile<<"property float z"<<endl;
@@ -517,14 +648,14 @@ void saveCloud(){
         for(auto f = all_fpoint.begin(); f!= all_fpoint.end(); f++){
             cv::Point3d pos = (*f)->getPosition();
             cv::Scalar color = (*f)->getColor();
-            myfile<<pos.x<<" "<<pos.y<<" "<<pos.z<<" ";
-            myfile<<color.val[0]<<" "<<color.val[1]<<" "<<color.val[2]<<endl;
+            myfile<<pos.x<<" "<<pos.y<<" "<<-pos.z<<" ";
+            myfile<<color.val[2]<<" "<<color.val[1]<<" "<<color.val[0]<<endl;
         }
         for(auto f = all_matched_point.begin(); f!= all_matched_point.end(); f++){
             cv::Point3d pos = (*f)->getPosition();
             cv::Scalar color = (*f)->getColor();
-            myfile<<pos.x<<" "<<pos.y<<" "<<pos.z<<" ";
-            myfile<<color.val[0]<<" "<<color.val[1]<<" "<<color.val[2]<<endl;
+            myfile<<pos.x<<" "<<pos.y<<" "<<-pos.z<<" ";
+            myfile<<color.val[2]<<" "<<color.val[1]<<" "<<color.val[0]<<endl;
         }
         for(auto f = all_pano.begin(); f!= all_pano.end(); f++){
             double x = (*f)->getRelativeX();
@@ -532,19 +663,25 @@ void saveCloud(){
             double z = 0;
             int c = 127+((*f)->getID()*128)/all_pano.size();
             for(double dx = 0; dx<5;dx+=1){
-                myfile<<x+0.2*dx<<" "<<y<<" "<<z<<" ";
+                myfile<<x+0.2*dx<<" "<<y<<" "<<-z<<" ";
                 myfile<<c<<" "<<0<<" "<<0<<endl;
             }
         
             for(double dx = 0; dx<5;dx+=1){
-                myfile<<x<<" "<<y+0.2*dx<<" "<<z<<" ";
+                myfile<<x<<" "<<y+0.2*dx<<" "<<-z<<" ";
                 myfile<<0<<" "<<c<<" "<<0<<endl;
             }
     
             for(double dx = 0; dx<5;dx+=1){
-                myfile<<x<<" "<<y<<" "<<z+0.2*dx<<" ";
+                myfile<<x<<" "<<y<<" "<<-(z+0.2*dx)<<" ";
                 myfile<<0<<" "<<0<<" "<<c<<endl;
             }
+        }
+        for(auto f = detail.begin(); f!= detail.end(); f++){
+            cv::Point3d pos = f->first;
+            cv::Vec3d color = f->second;
+            myfile<<pos.x<<" "<<pos.y<<" "<<-pos.z<<" ";
+            myfile<<color.val[2]<<" "<<color.val[1]<<" "<<color.val[0]<<endl;
         }
         myfile.close();
         cout << "Save complete!" << endl;
@@ -633,6 +770,29 @@ void normalrun(){
             }case KEY_A:{
                 saveData();
                 break;
+            }case KEY_3:{
+                cout<<"Create 3d simple mesh: ";
+                int a, b, c;
+                cin >> a;
+                cout<<", ";
+                cin >> b;
+                cout<<", ";
+                cin >> c;
+                mesh.push_back(make_pair(cv::Point3i(a,b,c), imh->getName()));
+                break;
+            }case KEY_4:{
+                cout<<"Create rectangular 3d simple mesh: ";
+                int a, b, c, d;
+                cin >> a;
+                cout<<", ";
+                cin >> b;
+                cout<<", ";
+                cin >> c;
+                cout<<", ";
+                cin >> d;
+                mesh.push_back(make_pair(cv::Point3i(a,b,c), imh->getName()));
+                mesh.push_back(make_pair(cv::Point3i(c,d,a), imh->getName()));
+                break;
             }case KEY_C:{
                 cout<<"Calibrate Pair: ";
                 int a, b;
@@ -680,8 +840,10 @@ int main(){
     cout<<"Load existing data ;w;? (y/n): ";
     string ans;
     cin >> ans;
-    if(ans=="y") loadData();
-    
+    if(ans=="y"){
+        loadData();
+        triangulateAll();
+    }
     normalrun();
     return 0;
 }

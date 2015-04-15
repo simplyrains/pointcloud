@@ -61,6 +61,10 @@ public:
     
     void saveData(std::ofstream& output);
     void loadData(std::ifstream& input);
+    // Compute the 128 dimension SIFT descriptor at each keypoint.
+    // Each row in "descriptors" correspond to the SIFT descriptor for each keypoint
+    cv::Mat descriptors;
+
 private:
     double lat;
     double lng;
@@ -70,9 +74,6 @@ private:
     double fraction;
     cv::Mat rendered;
     
-    // Compute the 128 dimension SIFT descriptor at each keypoint.
-    // Each row in "descriptors" correspond to the SIFT descriptor for each keypoint
-    cv::Mat descriptors;
     vector<cv::KeyPoint> keypoints;
     vector<cv::Point2d> keypointsHP;
     void prerender(double hfov, double pfov, double multiplication);
